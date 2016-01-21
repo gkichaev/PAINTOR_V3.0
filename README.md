@@ -1,5 +1,5 @@
 # PAINTOR_V3.0
-WARNING BETA VERSION! 
+WARNING BETA VERSION! Detailed repository with FAQ's, instruction manual, and annotation database coming soon!
 
 Input formats same as v2.1.
 
