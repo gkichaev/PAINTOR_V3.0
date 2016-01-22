@@ -71,25 +71,8 @@ double MVN_Density_ZeroMean_print (VectorXd& x, MatrixXd& sigma){
     cout << sigma << endl;
     return log_det + -.5*exponential_term;
 }
-/*
-double CalculateLogBayesFactor(VectorXd& zscore, MatrixXd& ld_matrix, VectorXd& causal_config, double prior_variance){
-    MatrixXd ld_c(causal_config.size(), causal_config.size());
-    VectorXd zscores_c(causal_config.size());
-    for(int i =0; i < causal_config.size(); i++){
-        zscores_c(i)=zscore(causal_config[i]);
-        for(int j = 0; j < causal_config.size(); j++){
-            ld_c(i,j)= ld_matrix(causal_config[i], causal_config[j]);
-        }
-    }
 
-    MatrixXd offset = ld_c+prior_variance*(ld_c*ld_c);
 
-    double bf_num = MVN_Density_ZeroMean(zscores_c, offset);
-    double bf_denom = MVN_Density_ZeroMean(zscores_c, ld_c);
-
-    return bf_num-bf_denom;
-}
-*/
 int Sample_Int(mt19937 & generator ,vector<double>& weights){
     /* Function that is analagous to sample.int function in R */
     discrete_distribution<int> distribution(weights.begin(), weights.end());
@@ -247,13 +230,13 @@ void CasualSet_To_String(string& causal_string, vector<int>& causal_set){
     causal_string.pop_back();
 }
 
-void Locus_Sampler(VectorXd& marginal, VectorXd& zscores, VectorXd& gammas, MatrixXd& annotations,  MatrixXd& ld_matrix, double& fullLikeli, double prior_variance, double  move_probability, int num_samples){
+void Locus_Sampler(VectorXd& marginal, VectorXd& zscores, VectorXd& gammas, MatrixXd& annotations,  MatrixXd& ld_matrix, double& fullLikeli, double prior_variance, double  move_probability, int num_samples, int sampling_seed){
     unsigned int num_snps = zscores.size();
     double log_runsum = -1e150;
     VectorXd per_snp_priors(num_snps);
     random_device rd;
     mt19937 generator(rd());
-    generator.seed(time(NULL));
+    generator.seed(sampling_seed);
 
     Compute_SNP_Priors(annotations, gammas, per_snp_priors);
 
@@ -321,14 +304,14 @@ void Locus_Sampler(VectorXd& marginal, VectorXd& zscores, VectorXd& gammas, Matr
     fullLikeli = fullLikeli+log_runsum;
 }
 
-void Locus_Sampler_Multi(VectorXd& marginal, vector<VectorXd>& zscores, VectorXd& gammas, MatrixXd& annotations,  vector<MatrixXd>& ld_matrix, double& fullLikeli, double prior_variance, double  move_probability, int num_samples){
+void Locus_Sampler_Multi(VectorXd& marginal, vector<VectorXd>& zscores, VectorXd& gammas, MatrixXd& annotations,  vector<MatrixXd>& ld_matrix, double& fullLikeli, double prior_variance, double  move_probability, int num_samples, int sampling_seed){
     unsigned int num_snps = zscores[0].size();
     unsigned int num_sets = zscores.size();
     double log_runsum = -1e150;
     VectorXd per_snp_priors(num_snps);
     random_device rd;
     mt19937 generator(rd());
-    generator.seed(time(NULL));
+    generator.seed(sampling_seed);
 
     Compute_SNP_Priors(annotations, gammas, per_snp_priors);
     unordered_map <string, double> causal_set_posteriors;
@@ -522,7 +505,7 @@ double Estep(vector<vector<VectorXd>> &Zscores, VectorXd &betas, vector<MatrixXd
 }
 
 
-double Estep(vector<vector<VectorXd>> &Zscores, VectorXd &betas, vector<MatrixXd> &Aijs, vector<vector<MatrixXd>>& ld_matrices, CausalProbs &E_out, double prior_variance,double  move_probability, int num_samples){
+double Estep(vector<vector<VectorXd>> &Zscores, VectorXd &betas, vector<MatrixXd> &Aijs, vector<vector<MatrixXd>>& ld_matrices, CausalProbs &E_out, double prior_variance,double  move_probability, int num_samples, int sampling_seed){
     vector<VectorXd> marginal_i;
     VectorXd temp;
     VectorXd exp_temp;
@@ -531,7 +514,7 @@ double Estep(vector<vector<VectorXd>> &Zscores, VectorXd &betas, vector<MatrixXd
     double fullLikeli = 0;
     for(unsigned int i = 0; i < Zscores.size(); i ++){
         VectorXd locus_log_marginals(Zscores[i][0].size());
-        Locus_Sampler_Multi(locus_log_marginals, Zscores[i], betas, Aijs[i], ld_matrices[i], fullLikeli, prior_variance, move_probability, num_samples);
+        Locus_Sampler_Multi(locus_log_marginals, Zscores[i], betas, Aijs[i], ld_matrices[i], fullLikeli, prior_variance, move_probability, num_samples, sampling_seed);
         exp_temp = locus_log_marginals.array().exp();
         marginal_i.push_back(exp_temp);
         stack_temp =  eigen2vec(exp_temp);
@@ -543,7 +526,7 @@ double Estep(vector<vector<VectorXd>> &Zscores, VectorXd &betas, vector<MatrixXd
     return(fullLikeli);
 }
 
-double Estep(vector<VectorXd> &Zscores, VectorXd &betas, vector<MatrixXd> &Aijs, vector<MatrixXd>& ld_matrices, CausalProbs &E_out, double prior_variance,double  move_probability, int num_samples){
+double Estep(vector<VectorXd> &Zscores, VectorXd &betas, vector<MatrixXd> &Aijs, vector<MatrixXd>& ld_matrices, CausalProbs &E_out, double prior_variance,double  move_probability, int num_samples,  int sampling_seed){
     vector<VectorXd> marginal_i;
     VectorXd temp;
     VectorXd exp_temp;
@@ -552,7 +535,7 @@ double Estep(vector<VectorXd> &Zscores, VectorXd &betas, vector<MatrixXd> &Aijs,
     double fullLikeli = 0;
     for(unsigned int i = 0; i < Zscores.size(); i ++){
         VectorXd locus_log_marginals(Zscores[i].size());
-        Locus_Sampler(locus_log_marginals, Zscores[i], betas, Aijs[i], ld_matrices[i], fullLikeli, prior_variance, move_probability, num_samples);
+        Locus_Sampler(locus_log_marginals, Zscores[i], betas, Aijs[i], ld_matrices[i], fullLikeli, prior_variance, move_probability, num_samples, sampling_seed);
         exp_temp = locus_log_marginals.array().exp();
         marginal_i.push_back(exp_temp);
         stack_temp =  eigen2vec(exp_temp);
@@ -610,7 +593,7 @@ void Copy_CausalProbs(CausalProbs& source, CausalProbs& destination ){
     }
 }
 
-double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> &Zscores,  VectorXd &beta_int, vector<MatrixXd> &Aijs,vector<vector<MatrixXd>> &ld_matrix , double prior_variance,double  move_probability, int num_samples){
+double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> &Zscores,  VectorXd &beta_int, vector<MatrixXd> &Aijs,vector<vector<MatrixXd>> &ld_matrix , double prior_variance,double  move_probability, int num_samples, int sampling_seed){
     //Run EM with sampling
     vector<double> beta_run = eigen2vec(beta_int);
     ObjectiveData Opt_in;
@@ -624,7 +607,7 @@ double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> 
     int succesful_opt;
     CausalProbs curr_probs;
     while(iterations < iter_max) {
-        likeli = Estep(Zscores, beta_int, Aijs, ld_matrix, probabilites, prior_variance, move_probability, num_samples);
+        likeli = Estep(Zscores, beta_int, Aijs, ld_matrix, probabilites, prior_variance, move_probability, num_samples, sampling_seed);
         VectorXd stacked_probabilities = vector2eigen(probabilites.probs_stacked);
         MatrixXd stacked_annotations(stacked_probabilities.size(), beta_int.size());
         Stack_EigenMatrices(Aijs, stacked_annotations);
