@@ -196,3 +196,41 @@ int Gradient_Ascent(VectorXd& current_gammas, VectorXd& new_gammas, VectorXd& st
     return 0;
 }
 
+void Gradient_Ascent(VectorXd& current_gammas, VectorXd& new_gammas, VectorXd& stacked_probabilites, MatrixXd& stacked_annotations, double gradient_tolerance, int max_iterations, VectorXd& return_values){
+    unsigned int num_parameters = current_gammas.size();
+    VectorXd gradient(num_parameters);
+    VectorXd gamma_iterate(num_parameters);
+    int max_line_search = 500;
+    int search_counter;
+    double tuner;
+    double new_objective;
+    double current_objective = Compute_Objective(current_gammas, stacked_probabilites, stacked_annotations);
+    for(int i = 0; i < max_iterations;i++){
+        tuner = 0.9;
+        Compute_Gradient(current_gammas, stacked_probabilites,stacked_annotations, gradient);
+        new_gammas = current_gammas + tuner * gradient;
+        new_objective = Compute_Objective(new_gammas, stacked_probabilites, stacked_annotations);
+        if(gradient.norm()>gradient_tolerance){
+            search_counter=0;
+            while (new_objective - current_objective <= 0){
+                search_counter++;
+                if(search_counter > max_line_search){
+                    return_values[0] = -9;
+                    return;
+                }
+                else {
+                    tuner = tuner * .9;
+                    new_gammas = current_gammas + tuner * gradient;
+                    new_objective = Compute_Objective(new_gammas, stacked_probabilites, stacked_annotations);
+                }
+            }
+            current_objective = new_objective;
+            return_values[1] = new_objective;
+            current_gammas = new_gammas;
+        }
+        else{
+            break;
+        }
+    }
+    return_values[0] = 0;
+}

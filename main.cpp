@@ -38,6 +38,7 @@ void Welcome_Message(){
     cout << "-num_samples  \t specify number of samples to draw for each locus [Default: 50000]" << endl ;
     cout << "-prob_add \t specify geometric probablity to add a causal [Default: 0.25]" << endl ;
     cout << "-enumerate\t specify this flag if you want to enumerate all possible configurations followed by the max number of causal SNPs (eg. -enumerate 3 considers up to 3 causals at each locus) [Default: not specified]" << endl;
+    cout << "-set_seed\t specify an integer as a seed for random number generator [default: clock time at execution]" << endl;
     cout << endl << endl ;
 }
 
@@ -66,7 +67,7 @@ int main(int argc, const char * argv[])
     int num_samples = 50000;
     double prob_add = .25;
     single_post_flag = "False";
-
+    int sampling_seed = time(NULL);
     vector<VectorXd> z_score_loc;
     vector<string> snp_info;
     MatrixXd chol_factor;
@@ -187,6 +188,9 @@ int main(int argc, const char * argv[])
             max_causal = stoi(argv[i+1]);
             enumerate_flag = 1;
         }
+        else if(argComp.compare("-set_seed")==0){
+            sampling_seed = stoi(argv[i+1]);
+        }
     }
 
     /* initialize PAINTOR model parameters */
@@ -244,8 +248,8 @@ int main(int argc, const char * argv[])
 
         }
         else{
-            cout << "Running PAINTOR in sampling mode"<< endl;
-             Final_loglikeli = EM_Run(runProbs, maxIter , all_transformed_statistics, gamma_estimates, all_annotations, all_sigmas, prior_variance, prob_add, num_samples );
+            cout << "Running PAINTOR in sampling mode with seed value: "<< sampling_seed << endl;
+            Final_loglikeli = EM_Run(runProbs, maxIter , all_transformed_statistics, gamma_estimates, all_annotations, all_sigmas, prior_variance, prob_add, num_samples, sampling_seed );
         }
 
         Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates,gammaName, Final_loglikeli, likeli_name, all_headers, annot_names);
