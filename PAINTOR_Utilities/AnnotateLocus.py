@@ -23,7 +23,7 @@ locus_name=options.locus_name
 
 usage = \
 """Usage:
-    -i (--input) file that contains list of directories of annotation .bed files
+    -i (--input) file that contains list of paths for annotation .bed files
     -l (--locus) file with chromosome and positions of snps in region to be annotated 
     -o (--out) name of filename to output
     -c (--chr) identifier of chromosome field in the header
