@@ -33,7 +33,7 @@ void Welcome_Message(){
     cout << "-ANname \t Suffix for annotation files [Default: annotations]" << endl;
     cout << "-MI \t Maximum iterations for algorithm to run [Default: 10]" << endl;
     cout << "-post1CV \t fast conversion of Z-scores to posterior probabilites assuming a single casual variant and no annotations [Default: False]" << endl;
-    cout << "-GAMinital \t inititalize the enrichment parameters to a pre-specified value (comma separated) [Default: 0,...,0]" << endl;
+    cout << "-GAMinitial \t inititalize the enrichment parameters to a pre-specified value (comma separated) [Default: 0,...,0]" << endl;
     cout << "-variance \t specify prior variance on effect sizes scaled by sample size [Default: 25]" << endl ;
     cout << "-num_samples  \t specify number of samples to draw for each locus [Default: 50000]" << endl ;
     cout << "-prob_add \t specify geometric probablity to add a causal [Default: 0.25]" << endl ;
@@ -209,7 +209,7 @@ int main(int argc, const char * argv[])
     CausalProbs runProbs;
     VectorXd gamma_estimates(all_annotations[0].cols());
     gamma_estimates.setZero();
-
+    gamma_estimates[0] = Get_Gamma_Zero(all_transformed_statistics);
     if(gamma_initial.size() > 0){
         vector<string> gamma_initial_split = split(gamma_initial, ',');
         if(gamma_initial_split.size() != annot_names.size()+1){

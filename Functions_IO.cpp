@@ -291,7 +291,15 @@ void Reshape_Input(vector<vector<VectorXd>>& all_locus_statistics, vector<vector
     }
 }
 
-
+double Get_Gamma_Zero(vector<vector<VectorXd>>& all_locus_statistics){
+    int num_loci = all_locus_statistics.size();
+    float total_snps =0;
+    for(int i = 0; i < all_locus_statistics.size(); i++){
+        total_snps+=all_locus_statistics[i][0].size();
+    }
+    float ave_snps = total_snps/num_loci;
+    return(log(ave_snps-1));
+}
 
 ///
 

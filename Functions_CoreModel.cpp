@@ -393,104 +393,147 @@ void Locus_Sampler_Multi(VectorXd& marginal, vector<VectorXd>& zscores, VectorXd
     fullLikeli = fullLikeli+log_runsum;
 }
 
-void Locus_Importance_Sampler(VectorXd& marginal, vector<VectorXd>& zscores, VectorXd& gammas, MatrixXd& annotations,  vector<MatrixXd>& ld_matrix, double& fullLikeli, double prior_variance, double  poisson_rate, int num_samples, int sampling_seed){
-    unsigned int num_snps = zscores[0].size();
-    unsigned int num_sets = zscores.size();
-    double log_runsum = -1e150;
-    VectorXd per_snp_priors(num_snps);
-    random_device rd;
-    mt19937 generator(rd());
-    generator.seed(sampling_seed);
-    VectorXd maller_probabilities;
 
-    //maller probablities will seed the prior for sampler
-    //too get joint prior on the causal sets if considering more than one set of Z-scores we will multiply them
-    for(int i = 0; i < num_sets; i++){
-        if(i==0){
-            maller_probabilities = Zscores2Post(zscores[i]);
-        }
-        else{
-            maller_probabilities = maller_probabilities.array()*Zscores2Post(zscores[i]).array();
-        }
-    }
-    vector<double> vector_maller_probabilities;
-    Eigen2Vector(vector_maller_probabilities, maller_probabilities);
-
-    Compute_SNP_Priors(annotations, gammas, per_snp_priors);
-    unordered_map <string, double> causal_set_posteriors;
-    causal_set_posteriors.reserve(num_samples);
-    vector<int> causal_set;
-    causal_set.push_back(0);
-    double log_bayes_factor;
-    double log_prior;
-    //compute single causal set
-    for(unsigned int i = 0; i < num_snps; i++){
-        causal_set[0] = i;
-        log_prior = Calculate_LogPrior(per_snp_priors, gammas, causal_set);
-        log_bayes_factor=0;
-        for(unsigned int j=0; j < num_sets; j++) {
-            log_bayes_factor += Calculate_LogBayesFactor(zscores[j], ld_matrix[j], causal_set, prior_variance);
-        }
-        marginal[i] = log_bayes_factor + log_prior;
-        log_runsum = LogSum(log_runsum, log_bayes_factor + log_prior);
-    }
-    causal_set[0] = 0;
-    causal_set.push_back(num_snps/2);
-    MatrixXd ld_sq_complement(num_snps,num_snps);
-    VectorXd Zscore_sq(num_snps);
+void Generate_Proposal_chi_sq(vector<VectorXd>& zscores, VectorXd& proposal, int num_snps, int num_sets){
     VectorXd divisor(num_snps);
     divisor.setZero();
     divisor = divisor.array()+(num_sets);
-    Zscore_sq.setZero();
-    ld_sq_complement = 1-ld_matrix[0].array().square();
+    proposal.setZero();
+    //get average chi-squares across traits/pops
     for(unsigned int j=0; j < num_sets; j++) {
-        Zscore_sq = Zscore_sq.array() + zscores[j].array().square();
+        proposal = proposal.array() + zscores[j].array().square();
     }
-    Zscore_sq = Zscore_sq.array()/divisor.array();
-    int counter = 0;
+    proposal = proposal.array()/divisor.array();
+    double normalizer = proposal.sum();
+    //normalize to be a probability
+    for(unsigned int i=0; i < num_snps; i++){
+        proposal[i] = proposal[i]/normalizer;
+    }
+}
 
-    VectorXd causal_prior(num_snps);
+void Generate_Proposal_Maller(vector<VectorXd>& zscores, VectorXd& proposal, int num_samples){
+    VectorXd maller_probs = Zscores2Post(zscores[0]);
+    for(unsigned int i = 0; i <zscores.size(); i++){
+        proposal[i] = max(maller_probs[i], 3.0/num_samples);
+    }
 
-    Get_Correlated_Prior(vector_maller_probabilities,causal_prior,poisson_rate,generator,Zscore_sq,ld_sq_complement,num_samples*2);
-  //  cout << causal_prior << endl;
-    int move;
-    int index_add;
-    int index_delete;
-    string causal_string;
-    unordered_map<string,double>::iterator found;
+}
+
+
+
+void Locus_Importance_Sampler2(VectorXd& marginal, vector<VectorXd>& zscores, VectorXd& gammas, MatrixXd& annotations, vector<MatrixXd>& ld_matrix, double& fullLikeli, double prior_variance, int num_samples, int sampling_seed){
+    unsigned int num_snps = zscores[0].size();
+    unsigned int num_sets = zscores.size();
+
+    random_device rd;
+    mt19937 generator(rd());
+    generator.seed(sampling_seed);
+
+    VectorXd per_snp_priors(num_snps);
+    Compute_SNP_Priors(annotations, gammas, per_snp_priors); //pre-compute priors for each SNP
+
+    vector<vector<int>> sampled_causal_sets;
+    vector<double> log_posterior_weight;
+
+
+    VectorXd proposal(num_snps);
+    Generate_Proposal_chi_sq(zscores, proposal, num_snps, num_sets);
+   // Generate_Proposal_Maller(zscores, proposal, num_samples);
+    int counter=0;
+    vector<int> causal_set;
+    double log_bayes_factor;
+    double log_prior;
     double log_weight;
-    double total_log_weight= -1e150;
-    while(counter <= num_samples){
-        counter ++;
-        causal_set.clear();
-        Sample_Causal_Vector(causal_prior,generator, causal_set);
-        //check if causal set has already been evaluated and store in hash table if it has not been
-        CasualSet_To_String(causal_string, causal_set);
-        //cout << causal_string << endl;
-        cout <<causal_set_posteriors.size() << endl;
-        found = causal_set_posteriors.find (causal_string);
+    double log_bayes_factor_pop;
+    double log_importance_normalizer=-150;
+    double log_result;
+    double log_import_weight;
 
-        if ((found == causal_set_posteriors.end()) && (causal_set.size()>0)) {
+    while(counter <= num_samples){
+        counter++;
+        causal_set.clear();
+        Sample_Causal_Vector(proposal,generator, causal_set);
+        sampled_causal_sets.push_back(causal_set);
+        if ((causal_set.size()>0)) {
             log_bayes_factor=0;
-            for(unsigned int j=0; j < num_sets; j++) {
-                log_bayes_factor += Calculate_LogBayesFactor(zscores[j], ld_matrix[j], causal_set, prior_variance);
+            for (int i = 0;  i<num_sets ; i++) {
+                log_bayes_factor_pop = Calculate_LogBayesFactor(zscores[i], ld_matrix[i], causal_set, prior_variance);
+                if (std::isnan(log_bayes_factor_pop)) {
+                    log_bayes_factor_pop = -1e150;
+                    cout << "unstable set" << endl;
+                }
+                log_bayes_factor += log_bayes_factor_pop;
             }
-            //compute the importance ratio
-            log_prior = Calculate_LogPrior(per_snp_priors, gammas, causal_set);
-            log_weight = Calc_Importance_logWeight(causal_prior, causal_set, log_prior);
-            total_log_weight = LogSum(total_log_weight,log_weight);
-            //
-            //cout << counter << " " << causal_string << " " << log_bayes_factor+ log_weight << endl;
-            causal_set_posteriors[causal_string] = log_bayes_factor+ log_weight;
+            log_import_weight = Calc_Importance_logWeight(per_snp_priors, proposal, causal_set);
+            log_result = log_bayes_factor + log_import_weight;
+            log_importance_normalizer = LogSum(log_importance_normalizer, log_result);
+
+            }
+        else{
+            log_bayes_factor =-1e150;
+            log_import_weight = Calc_Importance_logWeight(per_snp_priors, proposal, causal_set);
+            log_result = log_bayes_factor + log_import_weight;
+            log_importance_normalizer = LogSum(log_importance_normalizer, log_result);
+        }
+        log_posterior_weight.push_back(log_result);
+    }
+    marginal.setZero();
+    marginal = marginal.array()+ -1e150;
+    Marginalize_Importance_Sets(sampled_causal_sets, log_posterior_weight, log_importance_normalizer, marginal);
+
+}
+
+void Marginalize_Importance_Sets(vector<vector<int>>& sampled_causal_sets,  vector<double>& log_posterior_weight,  double log_normalizer, VectorXd& marginal_probs){
+    vector<int> curr_set;
+    int index;
+    for(unsigned int i=0; i < sampled_causal_sets.size(); i++){
+        curr_set = sampled_causal_sets[i];
+        if(curr_set.size()>0){
+            for(int j=0; j<curr_set.size(); j++){
+                index = curr_set[j];
+                marginal_probs[index] = LogSum(marginal_probs[index], log_posterior_weight[i]-log_normalizer);
+            }
         }
     }
-    cout << "Done Sampling";
-    Marginalize_Sets_Importance(causal_set_posteriors, marginal, log_runsum,total_log_weight);
-    for(int i = 0; i < num_snps; i ++){
-        marginal[i] = marginal[i]-log_runsum;
-    }
-    fullLikeli = fullLikeli+log_runsum;
+}
 
+
+
+double Importance_Expectation( unordered_map<string,double>& causal_posteriors, double total_log_weights){
+    string string_set;
+    double posterior;
+    double log_expectation= -1e150;
+    int counter =0;
+    for( auto it = causal_posteriors.begin(); it != causal_posteriors.end(); ++it){
+        counter++;
+        string_set =  it->first;
+        posterior =  it->second;
+        posterior = posterior - total_log_weights;
+        log_expectation = LogSum(posterior, log_expectation);
+        if(std::isnan(log_expectation)){
+            cout << posterior << endl;
+            cout << string_set << endl;
+        }
+    }
+    return log_expectation;
+}
+
+double Importance_Expectation( vector<Config_Prob>& causal_posteriors, double total_log_weights){
+    string string_set;
+    double posterior;
+    double log_expectation= -1e150;
+    int counter =0;
+    for(int i=0; i < causal_posteriors.size(); i++){
+        string_set = causal_posteriors[i].config;
+        posterior = causal_posteriors[i].value;
+        posterior = posterior - total_log_weights;
+        log_expectation = LogSum(posterior, log_expectation);
+        if(std::isnan(log_expectation)){
+            cout << posterior << endl;
+            cout << string_set << endl;
+        }
+    }
+    return log_expectation;
 }
 
 void Sample_Causal_Vector(VectorXd& causal_prior, mt19937& generator, vector<int>& causal_set){
@@ -502,17 +545,21 @@ void Sample_Causal_Vector(VectorXd& causal_prior, mt19937& generator, vector<int
     }
 }
 
-double Calc_Importance_logWeight(VectorXd& causal_prior, vector<int>& causal_set, double log_prior){
-    double log_causal_prob = 0;
-    for(int i = 0; i < causal_prior.size(); i++){
+
+double Calc_Importance_logWeight(VectorXd& per_snp_prior, VectorXd& proposal_prior, vector<int>& causal_set){
+    double log_prior = 0;
+    double log_proposal = 0;
+    for(int i = 0; i < per_snp_prior.size(); i++){
         if(find(causal_set.begin(), causal_set.end(), i) != causal_set.end()){
-            log_causal_prob += log(causal_prior[i]);
+            log_prior += log(per_snp_prior[i]);
+            log_proposal += log(proposal_prior[i]);
         }
         else{
-            log_causal_prob += log(1-causal_prior[i]);
+            log_prior += log(1-per_snp_prior[i]);
+            log_proposal += log(1-proposal_prior[i]);
         }
     }
-    return log_prior-log_causal_prob;
+    return(log_prior-log_proposal);
 }
 
 void Get_Correlated_Prior(vector<double>& maller_probabilities, VectorXd& causal_probs, double poisson_rate, mt19937& generator, VectorXd& Zscore_sq, MatrixXd& ld_sq_complement, int num_samples){
@@ -532,10 +579,9 @@ void Get_Correlated_Prior(vector<double>& maller_probabilities, VectorXd& causal
         }
         counter++;
     }
-   // for(int i =0; i < causal_probs.size(); i++){
- //       causal_probs[i] = causal_probs[i]/counter;
- //   }
+    double epsilon = 1e-100;
     causal_probs = causal_probs/counter;
+    causal_probs = causal_probs.array()+epsilon;
 }
 
 void string_to_int(string& input_string, vector<int>& output_int){
@@ -580,23 +626,21 @@ void Marginalize_Sets(unordered_map<string,double>& causal_posteriors, VectorXd&
     cout << "Sampled " << counter << " unique multi-causal sets in total" << endl << endl;
 }
 
-void Marginalize_Sets_Importance(unordered_map<string,double>& causal_posteriors, VectorXd& marginals, double& running_sum, double total_log_weights){
-    cout << "Trying to marginalize sets" << endl;
-     string string_set;
+void Marginalize_Sets(vector<Config_Prob>& causal_posteriors, VectorXd& marginals, double& running_sum){
+    string string_set;
     double posterior;
     int counter =0;
     vector<int> num_k_sampled;
     for(int k = 0; k < 6; k++){
         num_k_sampled.push_back(0);
     }
-    for( auto it = causal_posteriors.begin(); it != causal_posteriors.end(); ++it){
+    for( int i = 0; i < causal_posteriors.size(); i++){
+
         counter++;
-        string_set =  it->first;
-        posterior =  it->second;
-        posterior = posterior - total_log_weights;
+        string_set = causal_posteriors[i].config;
+        posterior = causal_posteriors[i].value;
         vector<int> causal_set;
         string_to_int(string_set, causal_set);
-
         int causal_set_size = causal_set.size();
         for(int j =0; j<causal_set_size; j++){
             marginals[causal_set[j]] = LogSum(marginals[causal_set[j]], posterior);
@@ -615,6 +659,36 @@ void Marginalize_Sets_Importance(unordered_map<string,double>& causal_posteriors
     }
     cout << "Sampled " << num_k_sampled[5] << " unique multi-causal sets of size 5 or greater " << endl;
     cout << "Sampled " << counter << " unique multi-causal sets in total" << endl << endl;
+}
+
+void Marginalize_Sets_Importance(vector<Config_Prob>& causal_posteriors, VectorXd& marginals, double total_log_weights){
+    string string_set;
+    double posterior;
+    int counter =0;
+    vector<int> num_k_sampled;
+    for(int k = 0; k < 6; k++){
+        num_k_sampled.push_back(0);
+    }
+    for( int i = 0; i < causal_posteriors.size(); i++){
+
+        counter++;
+        string_set = causal_posteriors[i].config;
+        posterior = causal_posteriors[i].value -total_log_weights;
+        vector<int> causal_set;
+        string_to_int(string_set, causal_set);
+        int causal_set_size = causal_set.size();
+        for(int j =0; j<causal_set_size; j++){
+            marginals[causal_set[j]] = LogSum(marginals[causal_set[j]], posterior);
+        }
+        if(causal_set_size> 5){
+            num_k_sampled[5]++;
+        }
+        else{
+            num_k_sampled[causal_set_size]++;
+        }
+        //running_sum = LogSum(running_sum, posterior);
+    }
+
 }
 
 void Enumerate_Posterior(VectorXd& Marginal, vector<VectorXd>& zscores, VectorXd& beta, MatrixXd& annotations,  vector<MatrixXd>& ld_matrix, int NC, double& fullLikeli, double prior_variance){
@@ -698,8 +772,10 @@ double Estep(vector<vector<VectorXd>> &Zscores, VectorXd &betas, vector<MatrixXd
     double fullLikeli = 0;
     for(unsigned int i = 0; i < Zscores.size(); i ++){
         VectorXd locus_log_marginals(Zscores[i][0].size());
-        Locus_Sampler_Multi(locus_log_marginals, Zscores[i], betas, Aijs[i], ld_matrices[i], fullLikeli, prior_variance, move_probability, num_samples, sampling_seed);
-        //Locus_Importance_Sampler(locus_log_marginals, Zscores[i], betas, Aijs[i], ld_matrices[i], fullLikeli, prior_variance, 2, num_samples, sampling_seed);
+       // Locus_Sampler_Multi(locus_log_marginals, Zscores[i], betas, Aijs[i], ld_matrices[i], fullLikeli, prior_variance, move_probability, num_samples, sampling_seed);
+       // Locus_Importance_Sampler(locus_log_marginals, Zscores[i], betas, Aijs[i], ld_matrices[i], fullLikeli, prior_variance, 2, num_samples, sampling_seed);
+        //void Locus_Importance_Sampler2(VectorXd& marginal, vector<VectorXd>& zscores, VectorXd& gammas, MatrixXd& annotations, vector<MatrixXd>& ld_matrix, double& fullLikeli, double prior_variance, int num_samples, int sampling_seed){
+        Locus_Importance_Sampler2(locus_log_marginals, Zscores[i], betas, Aijs[i], ld_matrices[i], fullLikeli, prior_variance, num_samples, sampling_seed);
         exp_temp = locus_log_marginals.array().exp();
         marginal_i.push_back(exp_temp);
         stack_temp =  eigen2vec(exp_temp);
@@ -798,7 +874,7 @@ double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> 
         VectorXd stacked_probabilities = vector2eigen(probabilites.probs_stacked);
         MatrixXd stacked_annotations(stacked_probabilities.size(), beta_int.size());
         Stack_EigenMatrices(Aijs, stacked_annotations);
-        if(likeliOld < likeli || iterations==0){
+        if(likeliOld <= likeli || iterations==0){
             Copy_CausalProbs(probabilites, curr_probs);
             VectorXd new_gammas(beta_int.size());
             VectorXd return_values(2);
@@ -808,7 +884,7 @@ double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> 
             EM_likelihood = return_values[1];
             if(succesful_opt == 0){
                 beta_int = new_gammas;
-                cout << std::setprecision(9) << "Sum of log Bayes Factors at iteration: " << iterations+1 << ": " << likeli << endl;
+             //   cout << std::setprecision(9) << "Sum of log Bayes Factors at iteration: " << iterations+1 << ": " << likeli << endl;
                 cout << "Parameter Estimates:" << endl << new_gammas << endl << endl;
                 cout << "EM Likelihood :" << EM_likelihood << endl;
             }
@@ -857,7 +933,7 @@ double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> 
             EM_likelihood = return_values[1];
             if(succesful_opt == 0){
                 beta_int = new_gammas;
-                cout << std::setprecision(9) << "Sum of log Bayes Factors at iteration: " << iterations+1 << ": " << likeli << endl;
+                //cout << std::setprecision(9) << "Sum of log Bayes Factors at iteration: " << iterations+1 << ": " << likeli << endl;
                 cout << "Parameter Estimates:" << endl << new_gammas << endl << endl;
                 cout << "EM Likelihood :" << EM_likelihood << endl;
             }

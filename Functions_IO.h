@@ -46,5 +46,6 @@ void Write_Posterior(string& out_dir, string & out_name, VectorXd& locus_results
 void Write_All_Output(string& input_files, string& out_dir, string& out_suffix, CausalProbs& results, vector<vector<string>> & all_locus_info,
                       VectorXd & gamma_estimates, string& Gname, double log_likeli, string & Lname, vector<string>& all_headers, vector<string>& annot_names);
 void Reshape_Input(vector<vector<VectorXd>>& all_locus_statistics, vector<vector<MatrixXd>> &all_ld_matrices,vector<VectorXd>& reshape_stats, vector<MatrixXd> &reshape_ld );
+double Get_Gamma_Zero(vector<vector<VectorXd>>& all_locus_statistics);
 
 #endif //PAINTOR_3_0_FUNCTIONS_H

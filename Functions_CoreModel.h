@@ -23,7 +23,11 @@ using namespace Eigen;
 using namespace std;
 //using namespace nlopt;
 
-
+struct Config_Prob
+{
+    string config;
+    double value;
+};
 
 void BuildCausalVector(VectorXd& vec2Build , VectorXd& index);
 void BuildCausalVector(VectorXd& vec2Build , VectorXd& index, vector<int>& index_as_vector);
@@ -59,9 +63,15 @@ void Gradient_Ascent(VectorXd& current_gammas, VectorXd& new_gammas, VectorXd& s
 void Sample_Poisson_Config(vector<double>& maller_probabilities, vector<int>& causal_set, double poisson_rate, mt19937& generator, VectorXd& Zscore_sq, MatrixXd& ld_sq_complement);
 void Get_Correlated_Prior(vector<double>& maller_probabilities, VectorXd& causal_probs, double poisson_rate, mt19937& generator, VectorXd& Zscore_sq, MatrixXd& ld_sq_complement, int num_samples);
 void Sample_Causal_Vector(VectorXd& causal_prior, mt19937& generator, vector<int>& causal_set);
-double Calc_Importance_logWeight(VectorXd& causal_prior, vector<int>& causal_set, double log_prior);
+double Calc_Importance_logWeight(VectorXd& causal_prior, vector<int>& causal_set);
 void Locus_Importance_Sampler(VectorXd& marginal, vector<VectorXd>& zscores, VectorXd& gammas, MatrixXd& annotations,  vector<MatrixXd>& ld_matrix, double& fullLikeli, double prior_variance, double  poisson_rate, int num_samples, int sampling_seed);
 void PrintVector(vector<int>& in_vec);
 void Marginalize_Sets_Importance(unordered_map<string,double>& causal_posteriors, VectorXd& marginals, double& running_sum, double total_log_weights);
 void Locus_Sampler_Multi(VectorXd& marginal, vector<VectorXd>& zscores, VectorXd& gammas, MatrixXd& annotations,  vector<MatrixXd>& ld_matrix, double& fullLikeli, double prior_variance, double  move_probability, int num_samples, int sampling_seed);
+double Importance_Expectation( unordered_map<string,double>& causal_posteriors, double total_log_weights);
+double Importance_Expectation( vector<Config_Prob>& causal_posteriors, double total_log_weights);
+void Marginalize_Sets(vector<Config_Prob>& causal_posteriors, VectorXd& marginals, double& running_sum);
+void Marginalize_Sets_Importance(vector<Config_Prob>& causal_posteriors, VectorXd& marginals, double total_log_weights);
+void Marginalize_Importance_Sets(vector<vector<int>>& sampled_causal_sets,  vector<double>& log_posterior_weight,  double log_normalizer, VectorXd& marginal_probs);
+double Calc_Importance_logWeight(VectorXd& per_snp_prior, VectorXd& proposal_prior, vector<int>& causal_set);
 #endif //PAINTOR_3_0_FUNCTIONS_COREMODEL_H
