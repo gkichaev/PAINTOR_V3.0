@@ -3,7 +3,9 @@
 //
 
 #include "Functions_IO.h"
-
+#include <sys/stat.h>
+#include <regex>
+#include <unistd.h>
 
 //Functions to read input
 
@@ -22,7 +24,18 @@ vector<string> split(const string &s, char delim) {
     return elems;
 }
 
+bool check_file_exists (const std::string& name) {
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
+}
+
 void Read_Locus(string &input_directory, string& fname, vector<string> & zname,  vector<VectorXd>& all_association_stat, vector<string>& snp_info, string & header){
+
+    if(!check_file_exists(input_directory+fname)){
+        cout << "Error: Locus file " << fname << " not found in directory : " << input_directory << endl;
+        cout << "Terminating Execution" << endl;
+        exit(0);
+    }
 
     ifstream locus;
     locus.open(input_directory+fname);
@@ -30,7 +43,6 @@ void Read_Locus(string &input_directory, string& fname, vector<string> & zname, 
     char delimiter = ' ';
     vector<string> split_header = split(header, delimiter);
 
-    //vector<string> fields = {"SNP_ID", "CHR", "POS", "EFFECT_ALLELE"};
     vector<int> z_index;
     for(unsigned int i=0; i < split_header.size(); i++){
         for(unsigned int j=0; j < zname.size(); j++){
@@ -39,10 +51,16 @@ void Read_Locus(string &input_directory, string& fname, vector<string> & zname, 
             }
         }
     }
+
+    if(z_index.size() != zname.size()){
+        cout << "Error! Specified Z-score headers not found in locus file" << endl;
+        cout << "Terminating Execution" << endl;
+        exit(0);
+    }
+
     string input_line;
     vector<string> split_line;
     vector<vector<string>> snp_info_split;
-    string stat_holder;
 
     while(getline(locus,input_line)){
         split_line = split(input_line, ' ');
@@ -91,7 +109,15 @@ double Regularize_LD(MatrixXd & ld_mat){
     return reg_factor;
 }
 
+
 void Read_LD(string &input_directory, string& fname , MatrixXd& ld_matrix){
+
+    if(!check_file_exists(input_directory+fname)){
+        cout << "Error: LD file " << fname << " not found in directory : " << input_directory << endl;
+        cout << "Terminating Execution" << endl;
+        exit(0);
+    }
+
     ifstream ld_file;
     ld_file.open(input_directory+fname);
     string ld_line;
@@ -105,14 +131,20 @@ void Read_LD(string &input_directory, string& fname , MatrixXd& ld_matrix){
     unsigned long num_snps = all_ld_line_split.size();
     MatrixXd numeric_ld(num_snps, num_snps);
     double val;
+    string val_str;
+    int check_ind;
     for(unsigned int i = 0; i < num_snps; i++){
         for(unsigned int j = 0; j < num_snps; j++){
-            val =  stod(all_ld_line_split[i][j]);
-            if(isfinite(val)) {
-                numeric_ld(i, j) = stod(all_ld_line_split[i][j]);
+            //check to make sure last digit is a number, otherwise throw error
+            val_str = all_ld_line_split[i][j];
+            check_ind = val_str.length()-1;
+            if(isdigit(val_str[check_ind])) {
+                numeric_ld(i, j) = stod(val_str);
             }
             else{
-                cout <<  "Error: Infinite value in LD matrix detected!!" << endl;
+                cout <<  "Error: Infinite/non-numeric value in LD matrix detected!!" << endl;
+                cout << "Terminating Execution. Check ld matrix file: " << fname << " at index (" << i << "," << j << ")" <<endl;
+                exit(0);
             }
         }
     }

@@ -15,13 +15,11 @@ using namespace std;
 //using namespace nlopt;
 
 void Welcome_Message(){
-    cout << "Welcome to PAINTOR v3.0. Copyright Gleb Kichaev 2015. This software is free for academic use. Please e-mail gkichaev@ucla.edu for questions." << endl;
-    cout << "For questions or bug reports please contact: gkichaev@ucla.edu \n \n "<< endl;
+    cout << "Welcome to PAINTOR v3.0. Copyright Gleb Kichaev 2015. This software is free for academic use. Please e-mail gkichaev@ucla.edu for questions or reporting bugs" << endl;
     cout << "For required files and format specifications see User Manual \n \n" << endl;
     cout << "Usage: PAINTOR -input [input_filename] -in [input_directory] -out [output_directory] -Zhead [Zscore_header(s)] -LDname [LD_suffix(es)]  -annotations [annot_name1,annot_name2,...]  <other options> \n"<< endl;
     cout << "OPTIONS: -flag \t Description [default setting]  \n" << endl;
     cout << "-input \t (required) Filename of the input file containing the list of the fine-mapping loci [default: input.files]" << endl;
-    cout << "-c \t The number of causal variants to consider per locus [default: 2]" << endl;
     cout << "-Zhead \t (required) The name(s) of the Zscores in the header of the locus file (comma separated) [default: N/A]" << endl;
     cout << "-LDname \t (required) Suffix(es) for LD files. Must match the order of Z-scores in locus file (comma separated) [Default:N/A]" << endl;
     cout << "-annotations \t The names of the annotations to include in model (comma separted) [default: N/A]" << endl;
@@ -34,11 +32,11 @@ void Welcome_Message(){
     cout << "-MI \t Maximum iterations for algorithm to run [Default: 10]" << endl;
     cout << "-post1CV \t fast conversion of Z-scores to posterior probabilites assuming a single casual variant and no annotations [Default: False]" << endl;
     cout << "-GAMinitial \t inititalize the enrichment parameters to a pre-specified value (comma separated) [Default: 0,...,0]" << endl;
-    cout << "-variance \t specify prior variance on effect sizes scaled by sample size [Default: 25]" << endl ;
+    cout << "-variance \t specify prior variance on effect sizes scaled by sample size [Default: 30]" << endl ;
     cout << "-num_samples  \t specify number of samples to draw for each locus [Default: 50000]" << endl ;
-    cout << "-prob_add \t specify geometric probablity to add a causal [Default: 0.25]" << endl ;
     cout << "-enumerate\t specify this flag if you want to enumerate all possible configurations followed by the max number of causal SNPs (eg. -enumerate 3 considers up to 3 causals at each locus) [Default: not specified]" << endl;
     cout << "-set_seed\t specify an integer as a seed for random number generator [default: clock time at execution]" << endl;
+    cout << "-max_causal\t specify the number of causals to pre-compute enrichments with [default: 2]" << endl;
     cout << endl << endl ;
 }
 
@@ -57,14 +55,14 @@ int main(int argc, const char * argv[])
     string gammaName = "Enrichment.Values";
     string likeli_name= "Log.Likelihood";
     string single_post_flag;
-    int maxIter= 10;
+    int maxIter= 15;
     string LD_suffix = "ld";
     string annot_suffix = "annotations";
     string results_suffix = "results";
     vector <string> LD_all_names;
     vector<string> z_headers;
     string ncp_flag= "default";
-    int num_samples = 50000;
+    int num_samples = 1000000;
     double prob_add = .25;
     single_post_flag = "False";
     int sampling_seed = time(NULL);
@@ -191,6 +189,9 @@ int main(int argc, const char * argv[])
         else if(argComp.compare("-set_seed")==0){
             sampling_seed = stoi(argv[i+1]);
         }
+        else if(argComp.compare("-max_causal")==0){
+            max_causal = stoi(argv[i+1]);
+        }
     }
 
     /* initialize PAINTOR model parameters */
@@ -213,7 +214,7 @@ int main(int argc, const char * argv[])
     if(gamma_initial.size() > 0){
         vector<string> gamma_initial_split = split(gamma_initial, ',');
         if(gamma_initial_split.size() != annot_names.size()+1){
-            cout << "Warning: Incorrect number of Enrichment parameters specified. Pre-setting all paramters to zero" << endl;
+            cout << "Warning: Incorrect number of Enrichment parameters specified. Pre-setting all parameters to zero" << endl;
         }
         else{
             for(unsigned int i =0; i < gamma_initial_split.size(); i++){
@@ -236,7 +237,7 @@ int main(int argc, const char * argv[])
                 single_post = Zscores2Post(all_transformed_statistics[i][0]);
                 all_single_post.push_back(single_post);
             }
-            Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates,gammaName, 0, likeli_name, all_headers, annot_names);
+            Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates, gammaName, 0, likeli_name, all_headers, annot_names);
         }
     }
 
@@ -248,10 +249,19 @@ int main(int argc, const char * argv[])
 
         }
         else{
-            cout << "Running PAINTOR in sampling mode with seed value: "<< sampling_seed << endl;
-            Final_loglikeli = EM_Run(runProbs, maxIter , all_transformed_statistics, gamma_estimates, all_annotations, all_sigmas, prior_variance, prob_add, num_samples, sampling_seed );
+            cout << "Running PAINTOR in sampling mode. Parameters Used: " << endl;
+            cout << "Seed value: " << sampling_seed << endl;
+            cout << "Number of draws for importance sampling: " << num_samples << endl;
+            cout << "Pre-computing functional enrichments considering up to " << max_causal << " causals per locus" << endl;
+            Final_loglikeli = PreCompute_Enrichment(maxIter, all_transformed_statistics, gamma_estimates, all_annotations, all_sigmas, prior_variance, max_causal);
+            cout << "Finished computing enrichments :" << endl;
+            cout << gamma_estimates << endl;
+            VectorXd gamma_run = gamma_estimates;
+            //Final_loglikeli = EM_Run(runProbs, 1 , all_transformed_statistics, gamma_run, all_annotations, all_sigmas, prior_variance, num_samples, sampling_seed );
+            double sampling_likelihood = PAINTOR_Importance_Sampling(all_transformed_statistics, gamma_run, all_annotations, all_sigmas, runProbs, prior_variance, num_samples, sampling_seed);
+            cout << "Enumerate sum of log Bayes Factors: "  <<Final_loglikeli << endl;
+            cout << "Sampling sum of log Bayes Factors: " << sampling_likelihood << endl;
         }
-
         Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates,gammaName, Final_loglikeli, likeli_name, all_headers, annot_names);
     }
 
