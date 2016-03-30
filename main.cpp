@@ -76,6 +76,7 @@ int main(int argc, const char * argv[])
     string gamma_initial;
     double prior_variance = 25;
     int enumerate_flag = 0;
+    int initialized_gammas=0;
     if(argc < 2){
         Welcome_Message();
         return 0;
@@ -169,6 +170,7 @@ int main(int argc, const char * argv[])
 
         else if(argComp.compare("-GAMinitial") == 0){
             gamma_initial = argv[i+1];
+            initialized_gammas = 1;
         }
 
         else if(argComp.compare("-variance")==0){
@@ -215,6 +217,7 @@ int main(int argc, const char * argv[])
         vector<string> gamma_initial_split = split(gamma_initial, ',');
         if(gamma_initial_split.size() != annot_names.size()+1){
             cout << "Warning: Incorrect number of Enrichment parameters specified. Pre-setting all parameters to zero" << endl;
+            initialized_gammas = 0;
         }
         else{
             for(unsigned int i =0; i < gamma_initial_split.size(); i++){
@@ -253,11 +256,14 @@ int main(int argc, const char * argv[])
             cout << "Seed value: " << sampling_seed << endl;
             cout << "Number of draws for importance sampling: " << num_samples << endl;
             cout << "Pre-computing functional enrichments considering up to " << max_causal << " causals per locus" << endl;
-            Final_loglikeli = PreCompute_Enrichment(maxIter, all_transformed_statistics, gamma_estimates, all_annotations, all_sigmas, prior_variance, max_causal);
+            if(initialized_gammas == 0) {
+                Final_loglikeli = PreCompute_Enrichment(maxIter, all_transformed_statistics, gamma_estimates,
+                                                        all_annotations, all_sigmas, prior_variance, max_causal);
+            }
             cout << "Finished computing enrichments :" << endl;
             cout << gamma_estimates << endl;
             VectorXd gamma_run = gamma_estimates;
-            //Final_loglikeli = EM_Run(runProbs, 1 , all_transformed_statistics, gamma_run, all_annotations, all_sigmas, prior_variance, num_samples, sampling_seed );
+
             double sampling_likelihood = PAINTOR_Importance_Sampling(all_transformed_statistics, gamma_run, all_annotations, all_sigmas, runProbs, prior_variance, num_samples, sampling_seed);
             cout << "Enumerate sum of log Bayes Factors: "  <<Final_loglikeli << endl;
             cout << "Sampling sum of log Bayes Factors: " << sampling_likelihood << endl;
