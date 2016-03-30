@@ -4,8 +4,8 @@
 
 #include "Functions_IO.h"
 #include <sys/stat.h>
-#include <regex>
-#include <unistd.h>
+
+
 
 //Functions to read input
 
@@ -108,7 +108,6 @@ double Regularize_LD(MatrixXd & ld_mat){
     ld_mat= ld_mat +Y;
     return reg_factor;
 }
-
 
 void Read_LD(string &input_directory, string& fname , MatrixXd& ld_matrix){
 
@@ -248,8 +247,17 @@ void Read_Annotations(string &input_directory, string& fname , vector<string>& m
     out_annotations=output;
 }
 
-//Functions to output results
+double Get_Gamma_Zero(vector<vector<VectorXd>>& all_locus_statistics){
+    int num_loci = all_locus_statistics.size();
+    float total_snps =0;
+    for(int i = 0; i < all_locus_statistics.size(); i++){
+        total_snps+=all_locus_statistics[i][0].size();
+    }
+    float ave_snps = total_snps/num_loci;
+    return(log(ave_snps-1));
+}
 
+//Functions to output results
 
 void Write_Posterior(string& out_dir, string & out_name, VectorXd& locus_results, vector<string>& locus_info, string& header ){
 
@@ -323,15 +331,7 @@ void Reshape_Input(vector<vector<VectorXd>>& all_locus_statistics, vector<vector
     }
 }
 
-double Get_Gamma_Zero(vector<vector<VectorXd>>& all_locus_statistics){
-    int num_loci = all_locus_statistics.size();
-    float total_snps =0;
-    for(int i = 0; i < all_locus_statistics.size(); i++){
-        total_snps+=all_locus_statistics[i][0].size();
-    }
-    float ave_snps = total_snps/num_loci;
-    return(log(ave_snps-1));
-}
+
 
 ///
 
