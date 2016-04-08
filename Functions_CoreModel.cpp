@@ -338,7 +338,7 @@ void Locus_Importance_Sampler(VectorXd& marginal, vector<VectorXd>& zscores, Vec
 
     VectorXd proposal(num_snps);
     Generate_Proposal_chi_sq(zscores, proposal, num_snps, num_sets);
-   // Generate_Proposal_Maller(zscores, proposal, num_samples);
+
     int counter=0;
     vector<int> causal_set;
     double log_bayes_factor;
