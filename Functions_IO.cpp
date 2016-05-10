@@ -40,8 +40,10 @@ void Read_Locus(string &input_directory, string& fname, vector<string> & zname, 
     ifstream locus;
     locus.open(input_directory+fname);
     getline(locus, header);
+    header.erase(std::remove(header.begin(), header.end(), '\r'), header.end());
     char delimiter = ' ';
     vector<string> split_header = split(header, delimiter);
+
 
     vector<int> z_index;
     for(unsigned int i=0; i < split_header.size(); i++){
@@ -51,6 +53,7 @@ void Read_Locus(string &input_directory, string& fname, vector<string> & zname, 
             }
         }
     }
+
 
     if(z_index.size() != zname.size()){
         cout << "Error! Specified Z-score headers not found in locus file" << endl;
