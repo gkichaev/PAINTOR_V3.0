@@ -247,12 +247,12 @@ def main():
         --population [-p] specify name of continental population {AFR, AMR, EAS, EUR, SAS} to compute LD with *
         --out_name [-o] specify the stem of the output files *
         --Zhead [-z] specify the name of Zscore field in header *
-        --drop_mono [-d] should snps found to be monomorphic in reference panel be dropped? [default: True]
         """
 
     if(locus_name == None or reference == None or effect_allele == None or alt_allele == None or population == None or out_name == None or position == None):
         sys.exit(usage)
-
+	
+    drop_mono=True
     [all_positions, all_data] = Read_Locus(locus_name,effect_allele,alt_allele,position)
     [vcf_rows, found_postions] = Filter_VCF_rows(reference,all_positions)
     pop_ids = Extract_Pop_Ids(map_file,population)
