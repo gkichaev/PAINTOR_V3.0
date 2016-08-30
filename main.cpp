@@ -9,6 +9,7 @@
 #include "Functions_Optimize.h"
 #include "Functions_CoreModel.h"
 #include "Functions_IO.h"
+//#include "permutation_module.h"
 
 using namespace Eigen;
 using namespace std;
@@ -77,6 +78,7 @@ int main(int argc, const char * argv[])
     double prior_variance = 25;
     int enumerate_flag = 0;
     int initialized_gammas=0;
+    int num_permutations = 0;
     if(argc < 2){
         Welcome_Message();
         return 0;
@@ -194,6 +196,10 @@ int main(int argc, const char * argv[])
         else if(argComp.compare("-max_causal")==0){
             max_causal = stoi(argv[i+1]);
         }
+
+        else if(argComp.compare("-run_permutations")==0){
+            num_permutations = stoi(argv[i+1]);
+        }
     }
 
     /* initialize PAINTOR model parameters */
@@ -226,50 +232,52 @@ int main(int argc, const char * argv[])
         }
     }
 
-    /* run PAINTOR */
 
-    if (single_post_flag.compare("True")==0) {
-        if (z_headers.size() > 1) {
-            cout << "Single Posterior Conversion not valid for more than 1 set of Z-scores per locus" << endl;
-            return 0;
-        }
-        else{
-            vector<VectorXd> all_single_post;
-            VectorXd single_post;
-            for(unsigned int i =0; i < all_transformed_statistics.size(); i++){
-                single_post = Zscores2Post(all_transformed_statistics[i][0]);
-                all_single_post.push_back(single_post);
+        if (single_post_flag.compare("True") == 0) {
+            if (z_headers.size() > 1) {
+                cout << "Single Posterior Conversion not valid for more than 1 set of Z-scores per locus" << endl;
+                return 0;
+            } else {
+                vector<VectorXd> all_single_post;
+                VectorXd single_post;
+                for (unsigned int i = 0; i < all_transformed_statistics.size(); i++) {
+                    single_post = Zscores2Post(all_transformed_statistics[i][0]);
+                    all_single_post.push_back(single_post);
+                }
+                Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates,
+                                 gammaName, 0, likeli_name, all_headers, annot_names);
             }
-            Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates, gammaName, 0, likeli_name, all_headers, annot_names);
-        }
-    }
+        } else {
+            double Final_loglikeli;
+            if (enumerate_flag == 1) {
+                cout << "Running PAINTOR with full enumeration of a maximum of " << max_causal << " causals per locus"
+                     << endl;
+                Final_loglikeli = EM_Run(runProbs, maxIter, all_transformed_statistics, gamma_estimates,
+                                         all_annotations, all_sigmas, prior_variance, max_causal);
 
-    else{
-        double Final_loglikeli;
-        if(enumerate_flag == 1) {
-            cout << "Running PAINTOR with full enumeration of a maximum of " << max_causal << " causals per locus" << endl;
-            Final_loglikeli = EM_Run(runProbs, maxIter , all_transformed_statistics, gamma_estimates, all_annotations, all_sigmas, prior_variance, max_causal);
+            } else {
+                cout << "Running PAINTOR in sampling mode. Parameters Used: " << endl;
+                cout << "Seed value: " << sampling_seed << endl;
+                cout << "Number of draws for importance sampling: " << num_samples << endl;
+                cout << "Pre-computing functional enrichments considering up to " << max_causal << " causals per locus"
+                     << endl;
+                if (initialized_gammas == 0) {
+                    Final_loglikeli = PreCompute_Enrichment(maxIter, all_transformed_statistics, gamma_estimates,
+                                                            all_annotations, all_sigmas, prior_variance, max_causal);
+                }
+                cout << "Finished computing enrichments :" << endl;
+                cout << gamma_estimates << endl;
+                VectorXd gamma_run = gamma_estimates;
 
-        }
-        else{
-            cout << "Running PAINTOR in sampling mode. Parameters Used: " << endl;
-            cout << "Seed value: " << sampling_seed << endl;
-            cout << "Number of draws for importance sampling: " << num_samples << endl;
-            cout << "Pre-computing functional enrichments considering up to " << max_causal << " causals per locus" << endl;
-            if(initialized_gammas == 0) {
-                Final_loglikeli = PreCompute_Enrichment(maxIter, all_transformed_statistics, gamma_estimates,
-                                                        all_annotations, all_sigmas, prior_variance, max_causal);
+                double sampling_likelihood = PAINTOR_Importance_Sampling(all_transformed_statistics, gamma_run,
+                                                                         all_annotations, all_sigmas, runProbs,
+                                                                         prior_variance, num_samples, sampling_seed);
+                cout << "Enumerate sum of log Bayes Factors: " << Final_loglikeli << endl;
+                cout << "Sampling sum of log Bayes Factors: " << sampling_likelihood << endl;
             }
-            cout << "Finished computing enrichments :" << endl;
-            cout << gamma_estimates << endl;
-            VectorXd gamma_run = gamma_estimates;
-
-            double sampling_likelihood = PAINTOR_Importance_Sampling(all_transformed_statistics, gamma_run, all_annotations, all_sigmas, runProbs, prior_variance, num_samples, sampling_seed);
-            cout << "Enumerate sum of log Bayes Factors: "  <<Final_loglikeli << endl;
-            cout << "Sampling sum of log Bayes Factors: " << sampling_likelihood << endl;
+            Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates, gammaName,
+                             Final_loglikeli, likeli_name, all_headers, annot_names);
         }
-        Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates,gammaName, Final_loglikeli, likeli_name, all_headers, annot_names);
-    }
 
     return 0;
 }

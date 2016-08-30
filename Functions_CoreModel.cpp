@@ -27,7 +27,7 @@ void BuildCausalVector(VectorXd& vec2Build , VectorXd& index, vector<int>& index
     }
 }
 
-inline double LogSum(double val1, double val2){
+double LogSum(double val1, double val2){
     double logsum = 0;
     if(val1 > val2){
         logsum = log(1 + exp(val2-val1)) + val1;
@@ -339,6 +339,13 @@ void Locus_Importance_Sampler(VectorXd& marginal, vector<VectorXd>& zscores, Vec
     VectorXd proposal(num_snps);
     Generate_Proposal_chi_sq(zscores, proposal, num_snps, num_sets);
 
+    //Determine optimal prior variances
+    VectorXd optimal_variance(num_sets);
+    for(int i = 0; i < num_sets ; i++){
+        optimal_variance[i] = determine_optimal_prior_variance(zscores[i]);
+    }
+    //
+
     int counter=0;
     vector<int> causal_set;
     double log_bayes_factor;
@@ -357,7 +364,7 @@ void Locus_Importance_Sampler(VectorXd& marginal, vector<VectorXd>& zscores, Vec
         if ((causal_set.size()>0)) {
             log_bayes_factor=0;
             for (int i = 0;  i<num_sets ; i++) {
-                log_bayes_factor_pop = Calculate_LogBayesFactor(zscores[i], ld_matrix[i], causal_set, prior_variance);
+                log_bayes_factor_pop = Calculate_LogBayesFactor(zscores[i], ld_matrix[i], causal_set, optimal_variance(i));
                 if (std::isnan(log_bayes_factor_pop)) {
                     log_bayes_factor_pop = -1e150;
                     cout << "unstable set" << endl;
@@ -476,6 +483,12 @@ void Enumerate_Posterior(VectorXd& Marginal, vector<VectorXd>& zscores, VectorXd
     for(int i =0 ; i < Marginal.size(); i++){
         Marginal(i) = -1e150;
     }
+    //Determine optimal prior variances
+    VectorXd optimal_variance(num_pops);
+    for(int i = 0; i < num_pops ; i++){
+        optimal_variance(i) = determine_optimal_prior_variance(zscores[i]);
+    }
+
     double c_prob = 0;
     double sum = 0;
     VectorXd causConfig(numsnps);
@@ -495,7 +508,7 @@ void Enumerate_Posterior(VectorXd& Marginal, vector<VectorXd>& zscores, VectorXd
         c_prob = Prior_CausalSet_Probabilty(per_snp_prior, beta, causConfig);
         log_bayes_factor = 0;
         for (int i = 0;  i<num_pops ; i++) {
-            log_bayes_factor_pop=Calculate_LogBayesFactor(zscores[i], ld_matrix[i], causal_index_as_vector, prior_variance);
+            log_bayes_factor_pop=Calculate_LogBayesFactor(zscores[i], ld_matrix[i], causal_index_as_vector, optimal_variance(i));
             if(std::isnan(log_bayes_factor_pop)){
                 log_bayes_factor_pop = -1e150;
             }
@@ -606,56 +619,6 @@ void Copy_CausalProbs(CausalProbs& source, CausalProbs& destination ){
     }
 }
 
-/*
-double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> &Zscores,  VectorXd &beta_int, vector<MatrixXd> &annotations,vector<vector<MatrixXd>> &ld_matrix , double prior_variance, int num_samples, int sampling_seed){
-    //Run EM with sampling
-    vector<double> beta_run = eigen2vec(beta_int);
-    ObjectiveData Opt_in;
-    Opt_in.Aijs = Stack_Matrices(annotations);
-    int iterations = 0;
-    VectorXd beta_update;
-    double likeliOld;
-    double likeli =1;
-    double gradient_tolerance = 1e-5;
-    int max_ascents = 100;
-    int succesful_opt;
-    CausalProbs curr_probs;
-    double EM_likelihood;
-    while(iterations < iter_max) {
-        likeli = Estep(Zscores, beta_int, annotations, ld_matrix, probabilites, prior_variance, num_samples, sampling_seed);
-        VectorXd stacked_probabilities = vector2eigen(probabilites.probs_stacked);
-        MatrixXd stacked_annotations(stacked_probabilities.size(), beta_int.size());
-        Stack_EigenMatrices(annotations, stacked_annotations);
-        if(likeliOld <= likeli || iterations==0){
-            Copy_CausalProbs(probabilites, curr_probs);
-            VectorXd new_gammas(beta_int.size());
-            VectorXd return_values(2);
-            Gradient_Ascent(beta_int,  new_gammas, stacked_probabilities, stacked_annotations, gradient_tolerance, max_ascents, return_values);
-            likeliOld = likeli;
-            succesful_opt = return_values[0];
-            EM_likelihood = return_values[1];
-            if(succesful_opt == 0){
-                beta_int = new_gammas;
-             //   cout << std::setprecision(9) << "Sum of log Bayes Factors at iteration: " << iterations+1 << ": " << likeli << endl;
-               // cout << "Parameter Estimates:" << endl << new_gammas << endl << endl;
-                //cout << "EM Likelihood :" << EM_likelihood << endl;
-            }
-            else{
-                cout << "Warning: Optimization unstable at iteration: " << iterations+1 << endl;
-                cout << "Maximum liklelihood estimate for enrichments potentially not reached" << endl;
-                cout << "Program is exiting and returning values corresponding to estimates from iteration: " << iterations << endl;
-                break;
-            }
-        }
-        else{
-            cout << "Last Iteration did not improve model fit. Resampling at prevoius estimates. " << endl;
-        }
-        iterations++;
-    }
-    Copy_CausalProbs(curr_probs,probabilites);
-    return(EM_likelihood);
-}
-*/
 
 double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> &Zscores,  VectorXd &beta_int, vector<MatrixXd> &Aijs,vector<vector<MatrixXd>> &ld_matrix , double prior_variance,int max_causals){
     //Run EM with full enumeration
@@ -752,6 +715,35 @@ double PreCompute_Enrichment(int iter_max, vector<vector<VectorXd>> &Zscores,  V
     Copy_CausalProbs(curr_probs,probabilites);
     return(likeli);
 }
+
+double log_normal_density_zero_mean(double x, double sigma_sq){
+    double pi = M_PI;
+    double density = -0.5*log(2*pi*sigma_sq)-(0.5*(1/sigma_sq)*x*x);
+    return(density);
+}
+
+double determine_optimal_prior_variance(VectorXd& zscore_vector){
+    //using grid search determine  which prior variance maximize the single casual
+    // bayes factor based on the observed zscores (i.e at the max Z)
+    double max_zscore = zscore_vector.array().abs().maxCoeff();
+    double log_density_std_norm = log_normal_density_zero_mean(max_zscore,1);
+    double tau_max = 500;
+    double curr_tau = 1;
+    double best_tau = 1;
+    double log_density_scaled_norm;
+    double optimal_density = -1e199;
+
+    while( curr_tau <= tau_max){
+        log_density_scaled_norm = log_normal_density_zero_mean(max_zscore, 1+curr_tau);
+        if(log_density_scaled_norm-log_density_std_norm > optimal_density){
+            best_tau = curr_tau;
+            optimal_density = log_density_scaled_norm-log_density_std_norm;
+        }
+        curr_tau += 0.25;
+    }
+    return(best_tau);
+}
+
 
 VectorXd Zscores2Post(VectorXd& Zs){
     VectorXd post(Zs.size());

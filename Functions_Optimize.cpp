@@ -105,7 +105,7 @@ void Gradient_Ascent(VectorXd& current_gammas, VectorXd& new_gammas, VectorXd& s
     unsigned int num_parameters = current_gammas.size();
     VectorXd gradient(num_parameters);
     VectorXd gamma_iterate(num_parameters);
-    int max_line_search = 500;
+    int max_line_search = 1000;
     int search_counter;
     double tuner;
     double new_objective;

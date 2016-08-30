@@ -18,6 +18,7 @@
 #include "Functions_IO.h"
 #include <unordered_map>
 #include <random>
+#include <math.h>
 
 using namespace Eigen;
 using namespace std;
@@ -36,7 +37,7 @@ inline double Prior_Snp_Probabilty(VectorXd& beta , VectorXd& aij);
 double Prior_CausalSet_Probabilty(VectorXd& priorJ,VectorXd& beta, VectorXd& C_vector);
 double MVN_Density_ZeroMean(VectorXd& x, MatrixXd& sigma);
 VectorXd Zscores2Post(VectorXd& Zs);
-inline double LogSum(double val1, double val2);
+double LogSum(double val1, double val2);
 vector<double> eigen2vec(VectorXd &vec);
 vector<vector<double> > Stack_Matrices(vector<MatrixXd> &mats);
 VectorXd vector2eigen(vector<double> &vec);
@@ -78,4 +79,8 @@ void Marginalize_Importance_Sets(vector<vector<int>>& sampled_causal_sets,  vect
 double Calc_Importance_logWeight(VectorXd& per_snp_prior, VectorXd& proposal_prior, vector<int>& causal_set);
 double PreCompute_Enrichment(int iter_max, vector<vector<VectorXd>> &Zscores,  VectorXd &gamma_intitial, vector<MatrixXd> &annotations,vector<vector<MatrixXd>> &ld_matrix , double prior_variance, int max_causals);
 double PAINTOR_Importance_Sampling(vector<vector<VectorXd>> &Zscores, VectorXd &betas, vector<MatrixXd> &Aijs, vector<vector<MatrixXd>>& ld_matrices, CausalProbs &E_out, double prior_variance, int num_samples, int sampling_seed);
+double log_normal_density_zero_mean(double x, double sigma_sq);
+double determine_optimal_prior_variance(VectorXd& zscore_vector);
+
+
 #endif //PAINTOR_3_0_FUNCTIONS_COREMODEL_H
