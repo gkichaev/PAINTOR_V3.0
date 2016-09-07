@@ -669,7 +669,8 @@ double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> 
         iterations++;
     }
     Copy_CausalProbs(curr_probs,probabilites);
-    return(EM_likelihood);
+    //return(EM_likelihood);
+    return(likeli);
 }
 
 double PreCompute_Enrichment(int iter_max, vector<vector<VectorXd>> &Zscores,  VectorXd &gamma_intitial, vector<MatrixXd> &annotations,vector<vector<MatrixXd>> &ld_matrix , double prior_variance, int max_causals){
