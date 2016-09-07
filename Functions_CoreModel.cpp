@@ -339,12 +339,12 @@ void Locus_Importance_Sampler(VectorXd& marginal, vector<VectorXd>& zscores, Vec
     VectorXd proposal(num_snps);
     Generate_Proposal_chi_sq(zscores, proposal, num_snps, num_sets);
 
-    //Determine optimal prior variances
+    /*Determine optimal prior variances
     VectorXd optimal_variance(num_sets);
     for(int i = 0; i < num_sets ; i++){
         optimal_variance[i] = determine_optimal_prior_variance(zscores[i]);
     }
-    //
+    */
 
     int counter=0;
     vector<int> causal_set;
@@ -364,7 +364,7 @@ void Locus_Importance_Sampler(VectorXd& marginal, vector<VectorXd>& zscores, Vec
         if ((causal_set.size()>0)) {
             log_bayes_factor=0;
             for (int i = 0;  i<num_sets ; i++) {
-                log_bayes_factor_pop = Calculate_LogBayesFactor(zscores[i], ld_matrix[i], causal_set, optimal_variance(i));
+                log_bayes_factor_pop = Calculate_LogBayesFactor(zscores[i], ld_matrix[i], causal_set, prior_variance);
                 if (std::isnan(log_bayes_factor_pop)) {
                     log_bayes_factor_pop = -1e150;
                     cout << "unstable set" << endl;
@@ -483,11 +483,14 @@ void Enumerate_Posterior(VectorXd& Marginal, vector<VectorXd>& zscores, VectorXd
     for(int i =0 ; i < Marginal.size(); i++){
         Marginal(i) = -1e150;
     }
-    //Determine optimal prior variances
+
+    /* Determine optimal prior variances
+
     VectorXd optimal_variance(num_pops);
     for(int i = 0; i < num_pops ; i++){
         optimal_variance(i) = determine_optimal_prior_variance(zscores[i]);
     }
+    */
 
     double c_prob = 0;
     double sum = 0;
@@ -508,7 +511,7 @@ void Enumerate_Posterior(VectorXd& Marginal, vector<VectorXd>& zscores, VectorXd
         c_prob = Prior_CausalSet_Probabilty(per_snp_prior, beta, causConfig);
         log_bayes_factor = 0;
         for (int i = 0;  i<num_pops ; i++) {
-            log_bayes_factor_pop=Calculate_LogBayesFactor(zscores[i], ld_matrix[i], causal_index_as_vector, optimal_variance(i));
+            log_bayes_factor_pop=Calculate_LogBayesFactor(zscores[i], ld_matrix[i], causal_index_as_vector, prior_variance);
             if(std::isnan(log_bayes_factor_pop)){
                 log_bayes_factor_pop = -1e150;
             }
