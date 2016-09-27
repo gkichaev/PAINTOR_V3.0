@@ -10,7 +10,9 @@
 #include <vector>
 #include <cmath>
 #include <Eigen>
-//#include "nlopt.hpp"
+
+#include "nlopt.hpp"
+
 #include <iterator>
 #include <string>
 #include <iomanip>
@@ -19,7 +21,7 @@
 #include "Functions_IO.h"
 using namespace Eigen;
 using namespace std;
-//using namespace nlopt;
+using namespace nlopt;
 
 
 

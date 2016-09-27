@@ -532,6 +532,7 @@ void Enumerate_Posterior(VectorXd& Marginal, vector<VectorXd>& zscores, VectorXd
         Marginal[f] = Marginal[f]- runsum;
     }
 
+
     fullLikeli = fullLikeli+runsum;
 }
 
@@ -637,11 +638,36 @@ double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> 
     int succesful_opt;
     CausalProbs curr_probs;
     double EM_likelihood;
+
+
     while(iterations < iter_max) {
         likeli = Estep(Zscores, beta_int, Aijs, ld_matrix, probabilites, prior_variance, max_causals);
         VectorXd stacked_probabilities = vector2eigen(probabilites.probs_stacked);
         MatrixXd stacked_annotations(stacked_probabilities.size(), beta_int.size());
         Stack_EigenMatrices(Aijs, stacked_annotations);
+        Opt_in.probs = probabilites.probs_stacked;
+        void *opt_ptr = &Opt_in;
+        try {
+            Optimize_Nlopt(beta_run, -20, 20, beta_run[0], opt_ptr);
+
+        }catch (exception& e) {
+           cout << "Optimization error encountered " << endl;
+            cout << vector2eigen(beta_run) << endl;
+        }
+
+        beta_update = vector2eigen(beta_run);
+        cout << std::setprecision(9) << "Sum of log Bayes Factors at iteration " << iterations << ": " <<likeli << endl;
+        cout << "Parameter Estimates:" << endl << beta_update << endl << endl;
+        if(abs(likeli - likeliOld) < 0.01){
+            beta_int = beta_update;
+            break;
+        }
+        else{
+            beta_int = beta_update;
+            likeliOld = likeli;
+            iterations++;
+        }
+        /*
         if(abs(likeliOld - likeli)> 0.01){
             Copy_CausalProbs(probabilites, curr_probs);
             VectorXd new_gammas(beta_int.size());
@@ -667,8 +693,9 @@ double EM_Run(CausalProbs &probabilites, int iter_max, vector<vector<VectorXd>> 
             break;
         }
         iterations++;
+        */
     }
-    Copy_CausalProbs(curr_probs,probabilites);
+    //Copy_CausalProbs(curr_probs,probabilites);
     //return(EM_likelihood);
     return(likeli);
 }
@@ -693,6 +720,30 @@ double PreCompute_Enrichment(int iter_max, vector<vector<VectorXd>> &Zscores,  V
         VectorXd stacked_probabilities = vector2eigen(probabilites.probs_stacked);
         MatrixXd stacked_annotations(stacked_probabilities.size(), gamma_intitial.size());
         Stack_EigenMatrices(annotations, stacked_annotations);
+        Opt_in.probs = probabilites.probs_stacked;
+        void *opt_ptr = &Opt_in;
+        try {
+            Optimize_Nlopt(beta_run, -20, 20, beta_run[0], opt_ptr);
+
+        }catch (exception& e) {
+            cout << "Optimization error encountered " << endl;
+            cout << vector2eigen(beta_run) << endl;
+        }
+
+        beta_update = vector2eigen(beta_run);
+        cout << std::setprecision(9) << "Sum of log Bayes Factors at iteration " << iterations << ": " <<likeli << endl;
+        cout << "Parameter Estimates:" << endl << beta_update << endl << endl;
+        if(abs(likeli - likeliOld) < 0.01){
+            gamma_intitial = beta_update;
+            break;
+        }
+        else{
+            gamma_intitial = beta_update;
+            likeliOld = likeli;
+            iterations++;
+        }
+
+       /*
         if(abs(likeliOld - likeli)> 0.01){
             Copy_CausalProbs(probabilites, curr_probs);
             VectorXd new_gammas(gamma_intitial.size());
@@ -715,6 +766,7 @@ double PreCompute_Enrichment(int iter_max, vector<vector<VectorXd>> &Zscores,  V
             break;
         }
         iterations++;
+        */
     }
     Copy_CausalProbs(curr_probs,probabilites);
     return(likeli);

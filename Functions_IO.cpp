@@ -89,7 +89,7 @@ void Read_Locus(string &input_directory, string& fname, vector<string> & zname, 
 }
 
 double Regularize_LD(MatrixXd & ld_mat){
-    double reg_factor = 0.001;
+    double reg_factor = 0.0001;
     int reg_flag = 0;
     double det;
     VectorXd X(ld_mat.rows());
