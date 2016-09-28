@@ -54,7 +54,7 @@ int main(int argc, const char * argv[])
     vector<string> annot_names;
     int max_causal = 2;
     string gammaName = "Enrichment.Values";
-    string likeli_name= "Log.Likelihood";
+    string likeli_name= "Log.BayesFactor";
     string single_post_flag;
     int maxIter= 15;
     string LD_suffix = "ld";
@@ -75,7 +75,7 @@ int main(int argc, const char * argv[])
     vector<string> annot_header;
     string file_list_name = "input.files";
     string gamma_initial;
-    double prior_variance = 25;
+    double prior_variance = 30;
     int enumerate_flag = 0;
     int initialized_gammas=0;
     int num_permutations = 0;
@@ -219,6 +219,7 @@ int main(int argc, const char * argv[])
     VectorXd gamma_estimates(all_annotations[0].cols());
     gamma_estimates.setZero();
     gamma_estimates[0] = Get_Gamma_Zero(all_transformed_statistics);
+
     if(gamma_initial.size() > 0){
         vector<string> gamma_initial_split = split(gamma_initial, ',');
         if(gamma_initial_split.size() != annot_names.size()+1){
