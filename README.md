@@ -9,7 +9,7 @@ Installation (requires gcc v4.9+ to install)
 
 2) cd into directory
 
-3) type "make"
+3) execute this command "bash install.sh"
 
 4) should create an executable "PAINTOR"
 
