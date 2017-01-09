@@ -9,7 +9,7 @@
 #include "Functions_Optimize.h"
 #include "Functions_CoreModel.h"
 #include "Functions_IO.h"
-//#include "permutation_module.h"
+#include "permutation_module.h"
 
 using namespace Eigen;
 using namespace std;
@@ -27,13 +27,13 @@ void Welcome_Message(){
     cout << "-in \t Input directory with all run files [default: ./ ]" << endl;
     cout << "-out \t Output directory where output will be written [default: ./ ]" << endl;
     cout << "-Gname \t Output Filename for enrichment estimates [default: Enrichment.Estimate]" << endl;
-    cout << "-Lname \t Output Filename for log likelihood [default: Log.BayesFactor]" << endl;
+    cout << "-Lname \t Output Filename for log likelihood [default: Log.Likelihood]" << endl;
     cout << "-RESname \t Suffix for ouput files of results [Default: results] " << endl;
     cout << "-ANname \t Suffix for annotation files [Default: annotations]" << endl;
     cout << "-MI \t Maximum iterations for algorithm to run [Default: 10]" << endl;
     cout << "-post1CV \t fast conversion of Z-scores to posterior probabilites assuming a single casual variant and no annotations [Default: False]" << endl;
     cout << "-GAMinitial \t inititalize the enrichment parameters to a pre-specified value (comma separated) [Default: 0,...,0]" << endl;
-    cout << "-variance \t specify prior variance on the causal effect sizes scaled by sample size [Default: 30]" << endl ;
+    cout << "-variance \t specify prior variance on effect sizes scaled by sample size [Default: 30]" << endl ;
     cout << "-num_samples  \t specify number of samples to draw for each locus [Default: 50000]" << endl ;
     cout << "-enumerate\t specify this flag if you want to enumerate all possible configurations followed by the max number of causal SNPs (eg. -enumerate 3 considers up to 3 causals at each locus) [Default: not specified]" << endl;
     cout << "-set_seed\t specify an integer as a seed for random number generator [default: clock time at execution]" << endl;
@@ -75,7 +75,7 @@ int main(int argc, const char * argv[])
     vector<string> annot_header;
     string file_list_name = "input.files";
     string gamma_initial;
-    double prior_variance = 30;
+    double prior_variance = 25;
     int enumerate_flag = 0;
     int initialized_gammas=0;
     int num_permutations = 0;
@@ -83,8 +83,6 @@ int main(int argc, const char * argv[])
         Welcome_Message();
         return 0;
     }
-    Check_Mandatory_Flags(argc, argv);
-
     for(int i = 1; i < argc; i++){
         string argComp = argv[i];
 
@@ -108,6 +106,11 @@ int main(int argc, const char * argv[])
                 out_dir = out_dir + "/";
             }
         }
+
+        else if(argComp.compare("-c") == 0){
+            max_causal = stoi(argv[i+1]);
+        }
+
 
         else if(argComp.compare("-LDname") == 0){
             string temp_ldnames = argv[i+1];
@@ -194,6 +197,9 @@ int main(int argc, const char * argv[])
             max_causal = stoi(argv[i+1]);
         }
 
+        else if(argComp.compare("-run_permutations")==0){
+            num_permutations = stoi(argv[i+1]);
+        }
     }
 
     /* initialize PAINTOR model parameters */
@@ -207,13 +213,11 @@ int main(int argc, const char * argv[])
 
     vector<VectorXd> run_zscores;
     vector<MatrixXd> run_ld;
-   // Reshape_Input(all_transformed_statistics, all_sigmas, run_zscores, run_ld);
 
     CausalProbs runProbs;
     VectorXd gamma_estimates(all_annotations[0].cols());
     gamma_estimates.setZero();
     gamma_estimates[0] = Get_Gamma_Zero(all_transformed_statistics);
-
     if(gamma_initial.size() > 0){
         vector<string> gamma_initial_split = split(gamma_initial, ',');
         if(gamma_initial_split.size() != annot_names.size()+1){
@@ -227,52 +231,24 @@ int main(int argc, const char * argv[])
         }
     }
 
+    VectorXd test_zscore = all_transformed_statistics[0][0];
+    MatrixXd ld_matrix = all_sigmas[0][0];
+    MatrixXd annotations = all_annotations[0];
 
-        if (single_post_flag.compare("True") == 0) {
-            if (z_headers.size() > 1) {
-                cout << "Single Posterior Conversion not valid for more than 1 set of Z-scores per locus" << endl;
-                return 0;
-            } else {
-                vector<VectorXd> all_single_post;
-                VectorXd single_post;
-                for (unsigned int i = 0; i < all_transformed_statistics.size(); i++) {
-                    single_post = Zscores2Post(all_transformed_statistics[i][0]);
-                    all_single_post.push_back(single_post);
-                }
-                Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates,
-                                 gammaName, 0, likeli_name, all_headers, annot_names);
-            }
-        } else {
-            double Final_loglikeli;
-            if (enumerate_flag == 1) {
-                cout << "Running PAINTOR with full enumeration of a maximum of " << max_causal << " causals per locus"
-                     << endl;
-                Final_loglikeli = EM_Run(runProbs, maxIter, all_transformed_statistics, gamma_estimates,
-                                         all_annotations, all_sigmas, prior_variance, max_causal);
+    //prior_variance = determine_optimal_prior_variance(test_zscore);
 
-            } else {
-                cout << "Running PAINTOR in sampling mode. Parameters Used: " << endl;
-                cout << "Seed value: " << sampling_seed << endl;
-                cout << "Number of draws for importance sampling: " << num_samples << endl;
-                cout << "Pre-computing functional enrichments considering up to " << max_causal << " causals per locus"
-                     << endl;
-                if (initialized_gammas == 0) {
-                    Final_loglikeli = PreCompute_Enrichment(maxIter, all_transformed_statistics, gamma_estimates,
-                                                            all_annotations, all_sigmas, prior_variance, max_causal);
-                }
-                cout << "Finished computing enrichments :" << endl;
-                cout << gamma_estimates << endl;
-                VectorXd gamma_run = gamma_estimates;
+//    double compute_mean_log_bf(VectorXd& zscore, MatrixXd& ld_matrix, VectorXd& gamma_values, MatrixXd& annotations, int num_causal, double prior_variance);
+    cout << "prior variance is " << prior_variance << endl;
+    cout << "considering up to  " << max_causal << " per locus" << endl;
+    double test_log_bf = compute_max_log_bf(test_zscore, ld_matrix, gamma_estimates, annotations, max_causal, prior_variance);
+    cout << "Test max log bf  " << test_log_bf << endl;
+    double perm_pvalue  = run_permutations_max_bfs(test_log_bf,ld_matrix, gamma_estimates,num_permutations/10000,10, max_causal, prior_variance);
+    cout << "Permutation pvalue max BF " << perm_pvalue << endl;
 
-                double sampling_likelihood = PAINTOR_Importance_Sampling(all_transformed_statistics, gamma_run,
-                                                                         all_annotations, all_sigmas, runProbs,
-                                                                         prior_variance, num_samples, sampling_seed);
-                cout << "Enumerate sum of log Bayes Factors: " << Final_loglikeli << endl;
-                cout << "Sampling sum of log Bayes Factors: " << sampling_likelihood << endl;
-            }
-            Write_All_Output(input_files, out_dir, results_suffix, runProbs, all_snp_info, gamma_estimates, gammaName,
-                             Final_loglikeli, likeli_name, all_headers, annot_names);
-        }
+    test_log_bf = compute_mean_log_bf(test_zscore, ld_matrix, gamma_estimates, annotations, max_causal, prior_variance);
+    cout << "Test avg log  bf  " << test_log_bf << endl;
+    perm_pvalue  = run_permutations_avg_bfs(test_log_bf,ld_matrix, gamma_estimates,num_permutations,10, max_causal, prior_variance);
+    cout << "Permutation pvalue based on avg BF " << perm_pvalue << endl;
 
     return 0;
 }

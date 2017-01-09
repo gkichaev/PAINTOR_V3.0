@@ -88,6 +88,50 @@ void Read_Locus(string &input_directory, string& fname, vector<string> & zname, 
 
 }
 
+void Check_Mandatory_Flags(int argc, const char * argv[]){
+    //mandatory flags that need to be specified are (1) input file list, (2) directory where input files are located
+    //(3) zscore names in locus file header, (4) ld suffix
+    bool input_missing = 1;
+    bool in_dir_missing = 1;
+    bool ld_name_missing =1;
+    bool zscore_flag_missing =1;
+    for(int i = 0; i < argc; i++){
+        string argComp = argv[i];
+        if(argComp.compare("-input")== 0){
+             input_missing = 0;
+        }
+        else if(argComp.compare("-in") == 0){
+            bool in_dir_missing = 0;
+        }
+
+        else if(argComp.compare("-LDname") == 0){
+            bool ld_name_missing = 0;
+        }
+        else if(argComp.compare("-Zhead") == 0){
+            bool zscore_flag_missing = 0;
+        }
+    }
+
+    if(input_missing){
+        cout << "Error: Please specify -input flag" << endl;
+        exit(0);
+    }
+
+    if(in_dir_missing){
+        cout << "Error: Please specify -in flag" << endl;
+        exit(0);
+    }
+    if(ld_name_missing){
+        cout << "Error: Please specify -LDname flag" << endl;
+        exit(0);
+    }
+    if(zscore_flag_missing){
+        cout << "Error: Please specify -Zhead flag" << endl;
+        exit(0);
+    }
+
+}
+
 double Regularize_LD(MatrixXd & ld_mat){
     double reg_factor = 0.0001;
     int reg_flag = 0;
