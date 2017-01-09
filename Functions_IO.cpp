@@ -91,24 +91,24 @@ void Read_Locus(string &input_directory, string& fname, vector<string> & zname, 
 void Check_Mandatory_Flags(int argc, const char * argv[]){
     //mandatory flags that need to be specified are (1) input file list, (2) directory where input files are located
     //(3) zscore names in locus file header, (4) ld suffix
-    bool input_missing = 1;
-    bool in_dir_missing = 1;
-    bool ld_name_missing =1;
-    bool zscore_flag_missing =1;
+    bool input_missing = true;
+    bool in_dir_missing = true;
+    bool ld_name_missing = true;
+    bool zscore_flag_missing = true;
     for(int i = 0; i < argc; i++){
         string argComp = argv[i];
         if(argComp.compare("-input")== 0){
-             input_missing = 0;
+             input_missing = false;
         }
         else if(argComp.compare("-in") == 0){
-            bool in_dir_missing = 0;
+             in_dir_missing = false;
         }
 
         else if(argComp.compare("-LDname") == 0){
-            bool ld_name_missing = 0;
+             ld_name_missing = false;
         }
         else if(argComp.compare("-Zhead") == 0){
-            bool zscore_flag_missing = 0;
+             zscore_flag_missing = false;
         }
     }
 
