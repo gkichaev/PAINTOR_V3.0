@@ -24,9 +24,10 @@ We provide a command line implementation of the PAINTOR frameworks described in 
   - This prior probability is not pre-specified, but rather, learned directly from the data via Empirical Bayes.
 4. Quantify enrichment of causal variants within functional classes
   - Enables users to unbiasedly select from a (potentially) large pool functional annotations that are most phenotypically relevant
-5. (optional) Model population-specific LD patterns.
-6. (optional) Leverage cross-trait 
-7. (optional) Approximate inference via Importance Sampling. 
+5. Fully Bayesian treatment of causal effect sizes
+6. (optional) Model population-specific LD patterns when doing multi-ethnic fine-mapping.
+7. (optional) Joint inference across traits when doing multi-trait fine-mapping.
+8. (optional) Approximate inference via Importance Sampling. 
 
 ####For detailed information about input file formats, command line flags, and recommended analysis pipelines please see the [wiki](https://github.com/gkichaev/PAINTOR_V3.0/wiki)
 
@@ -45,7 +46,7 @@ This will create an executable "PAINTOR". Sample data is provided with the packa
 
 `./PAINTOR -input SampleData/input.files -in SampleData/ -out SampleData/ -Zhead Zscore -LDname ld -enumerate 2 -annotations DHS`
 
-If everything worked correctly the final sum of log Bayes Factors should be: `653.892389`
+If everything worked correctly the final sum of log Bayes Factors should be: `654.233501`
 
 For quick start simply type:
 
