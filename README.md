@@ -26,9 +26,9 @@ We provide a command line implementation of the PAINTOR frameworks described in 
   - Enables users to unbiasedly select from a (potentially) large pool functional annotations that are most phenotypically relevant
 5. (optional) Model population-specific LD patterns.
 6. (optional) Leverage cross-trait 
-7. (optional) Improved computational performance via Importance Sampling. 
+7. (optional) Approximate inference via Importance Sampling. 
 
-For detailed information about input file formats, command line flags, and recommended analysis pipelines please see the [wiki](https://github.com/gkichaev/PAINTOR_V3.0/wiki).
+####For detailed information about input file formats, command line flags, and recommended analysis pipelines please see the [wiki](https://github.com/gkichaev/PAINTOR_V3.0/wiki)
 
 ## Installation
 The software has two dependencies: [1] Eigen v3.2 (matrix library) [2] NLopt v2.4.2 (optimization library) which are packaged with PAINTOR in order to simplify installation. Please see the [Eigen homepage](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [NLopt homepage](http://ab-initio.mit.edu/wiki/index.php/NLopt) for more information. Note that compiling requires gcc V4.9 (or greater). 
@@ -53,6 +53,4 @@ For quick start simply type:
 
 
 ## Functional Annotations
-We have compiled library of functional annotations that you may find useful. You can download it [here] (https://ucla.box.com/s/x47apvgv51au1rlmuat8m4zdjhcniv2d). This large compendium includes bed files for most of the Roadmap/ENCODE data as well as other regulatory and genic annotations. 
-
-##
+We have compiled library of functional annotations that you may find useful. You can download it [here] (https://ucla.box.com/s/x47apvgv51au1rlmuat8m4zdjhcniv2d). This large compendium includes .bed files for most of the Roadmap/ENCODE data as well as other regulatory and genic annotations. 
