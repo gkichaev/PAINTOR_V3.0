@@ -53,4 +53,4 @@ For quick start simply type:
 
 
 ## Functional Annotations
-We have compiled library of functional annotations that you may find useful. You can download it [here] (https://ucla.box.com/s/x47apvgv51au1rlmuat8m4zdjhcniv2d). This large compendium includes .bed files for most of the Roadmap/ENCODE data as well as other regulatory and genic annotations. 
+We have compiled library of functional annotations that you may find useful. This large compendium includes .bed files for most of the Roadmap/ENCODE data as well as other regulatory and genic annotations.  Please see the  [wiki] (https://github.com/gkichaev/PAINTOR_V3.0/wiki/2b.-Overlapping-annotations) for more information and download link.
