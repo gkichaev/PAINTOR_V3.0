@@ -2,7 +2,7 @@
 Probabilistic Annotation INtegraTOR
 
 ##UPDATE 01/07/17
-Announcing PAINTOR v3.0! The new version has enhancements that improve computational effiency, statistical robustness, as well as having expanded functionality to leverage multiple traits. In adddition, we have developed a visualiziation tool, [PAINTOR-CANVIS](https://github.com/gkichaev/PAINTOR_V3.0/tree/master/CANVIS), to produce publication-ready plots for the output of PAINTOR.  
+Announcing PAINTOR v3.0! The new version has enhancements that improve computational effiency, statistical robustness, as well as having expanded functionality to leverage multiple traits. In adddition, we have developed a visualiziation tool, [PAINTOR-CANVIS](https://github.com/gkichaev/PAINTOR_V3.0/tree/master/CANVIS), to produce publication-ready plots for the output of PAINTOR as seen below.  
 
 For legacy purposes, we leave available [PAINTOR 2.1](https://github.com/gkichaev/PAINTOR_V2.1), though we recommend using this latest version for most accurate results.
 
