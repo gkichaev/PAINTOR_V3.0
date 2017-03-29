@@ -1,15 +1,19 @@
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.patches as mpatches
+
+
 from scipy.stats import norm
 import math
 from optparse import OptionParser
 import svgutils.transform as sg
 import sys
-import cairosvg
+#import cairosvg
 import warnings
 import os
 
@@ -135,23 +139,23 @@ def Plot_Statistic_Value(position, zscore, zscore_names, greyscale, lds):
                 [top_vect, top_SNP] = Find_Top_SNP(z, correlation_matrix)
 
             if greyscale == 'y':
-                sub.scatter(position, pvalue, c=top_vect, cmap='Greys', zorder=1)
+                sub.scatter(position, pvalue, c=top_vect, cmap='Greys', zorder=1, clip_on=False)
             else:
-                sub.scatter(position, pvalue, c=top_vect, cmap='jet', zorder=1)
+                sub.scatter(position, pvalue, c=top_vect, cmap='jet', zorder=1, clip_on=False)
             x = position[top_SNP]
             y = pvalue[top_SNP]
-            sub.plot(x, y, marker='D', color='black', zorder=2)
+            sub.plot(x, y, marker='D', color='black', zorder=2, clip_on=False)
         else:
             if greyscale == "y":
-                sub.scatter(position, pvalue, color='#6B6B6B')
+                sub.scatter(position, pvalue, color='#6B6B6B', clip_on=False)
             else:
-                sub.scatter(position, pvalue, color='#D64541')
+                sub.scatter(position, pvalue, color='#D64541', clip_on=False)
 
         plt.gca().set_ylim(bottom=0)
         #add threshold line at 5*10-8
         x = [np.amin(position), np.amax(position) + 1]
         y = [-1*math.log(5*10**-8)/(math.log(10)), -1*math.log(5*10**-8)/(math.log(10))]
-        plt.plot(x,y,'gray', linestyle='dashed')
+        plt.plot(x,y,'gray', linestyle='dashed', clip_on=False)
         label = mpatches.Patch(color='#FFFFFF', label=zscore_names[i])
         legend = plt.legend(handles=[label])
         for label in legend.get_texts():
@@ -193,9 +197,9 @@ def Plot_Position_Value(position, pos_prob, threshold, greyscale):
     plt.ylabel('Posterior probabilities', fontsize=10)
     plt.tick_params(axis='both', which='major', labelsize=10)
     plt.xlabel('Location', fontsize=10)
-    sub1.scatter(position, pos_prob, color=plot_color)
+    sub1.scatter(position, pos_prob, color=plot_color, clip_on=False)
     if threshold != 0:
-        sub1.scatter(credible_loc, credible_prob, color=set_color, label='Credible Set')
+        sub1.scatter(credible_loc, credible_prob, color=set_color, label='Credible Set', clip_on=False)
         title = "Credible Set: " + str(threshold*100) + "%"
         credible_set = mpatches.Patch(color=set_color, label=title)
         legend = plt.legend(handles=[credible_set])
@@ -290,7 +294,7 @@ def Plot_Annotations(annotation_names, annotation_vectors, greyscale):
                     colors.append(color_array[0])
                 else:
                     colors.append('#FFFFFF')
-        fig = plt.figure(figsize=(5, 1))
+        fig = plt.figure(figsize=(5, .75))
         ax2 = fig.add_axes([0.05, 0.8, 0.9, 0.15])
         cmap = mpl.colors.ListedColormap(colors)
         cmap.set_over('0.25')
@@ -299,7 +303,7 @@ def Plot_Annotations(annotation_names, annotation_vectors, greyscale):
         norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
         annotation_plot = mpl.colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm, spacing='proportional',
                                                     orientation='horizontal')
-        annotation_plot.set_label(annotation_names[i], fontsize=12)
+        annotation_plot.set_label(annotation_names[i], fontsize=8)
         annotation_plot.set_ticks([])
         annotation_plot = fig
         annotation_tuple.append(annotation_plot)
@@ -308,9 +312,9 @@ def Plot_Annotations(annotation_names, annotation_vectors, greyscale):
 def Assemble_Figure(zscore_plots, value_plots, heatmaps, annotation_plot, output, horizontal):
     """Assemble everything together and return svg and pdf of final figure"""
     DPI = 300
-    size_prob_plot = 200
+    size_prob_plot = 215
     size_stat_plot = 225
-    size_annotation_plot = 25
+    size_annotation_plot = 30
     size_heatmap = 200
 
     if heatmaps == None:
@@ -378,7 +382,7 @@ def Assemble_Figure(zscore_plots, value_plots, heatmaps, annotation_plot, output
             plot = sg.fromfile('annotation_plot.svg')
             plot3 = plot.getroot()
             y_move = size_prob_plot + size_annotation_plot * (index + 1)
-            plot3.moveto(30, 250, scale=1.05)
+            plot3.moveto(30, y_move, scale=1.05)
             index += 1
             fig.append(plot3)
 
