@@ -1,14 +1,14 @@
 # PAINTOR
 Probabilistic Annotation INtegraTOR
 
-##UPDATE 01/07/17
+## UPDATE 01/07/17
 Announcing PAINTOR v3.0! The new version has enhancements that improve computational effiency, statistical robustness, as well as having expanded functionality to leverage multiple traits. In adddition, we have developed a visualiziation tool, [PAINTOR-CANVIS](https://github.com/gkichaev/PAINTOR_V3.0/tree/master/CANVIS), to produce publication-ready plots for the output of PAINTOR as seen below.  
 
 For legacy purposes, we leave available [PAINTOR 2.1](https://github.com/gkichaev/PAINTOR_V2.1), though we recommend using this latest version for most accurate results.
 
 ## Description
 
-<img align="right" src="CANVIS/CANvis_Sample/canvis.jpg">
+<img align="right" src="CANVIS/CANvis_Sample/canvis.png">
 
 We provide a command line implementation of the PAINTOR frameworks described in Kichaev et al. [(PLOS Genetics, 2014)](http://www.plosgenetics.org/article/info%3Adoi%2F10.1371%2Fjournal.pgen.1004722),  [(American Journal of Human Genetics, 2015)](http://www.cell.com/ajhg/abstract/S0002-9297(15)00243-8), and  [(Bioinformatics, 2016)](http://bioinformatics.oxfordjournals.org/content/early/2016/10/16/bioinformatics.btw615).  Briefly, PAINTOR is a statistical fine-mapping method that integrates functional genomic data with association strength from potentially multiple populations (or traits) to prioritize variants for follow-up analysis. The software runs on multiple fine-mapping loci and/or populations/traits simultaneously and takes as input the following data for each set of SNPs at a locus
 
@@ -30,7 +30,7 @@ We provide a command line implementation of the PAINTOR frameworks described in 
 7. (optional) Joint inference across traits when doing multi-trait fine-mapping.
 8. (optional) Approximate inference via Importance Sampling. 
 
-####For detailed information about input file formats, command line flags, and recommended analysis pipelines please see the [wiki](https://github.com/gkichaev/PAINTOR_V3.0/wiki)
+#### For detailed information about input file formats, command line flags, and recommended analysis pipelines please see the [wiki](https://github.com/gkichaev/PAINTOR_V3.0/wiki)
 
 ## Installation
 The software has two dependencies: [1] Eigen v3.2 (matrix library) [2] NLopt v2.4.2 (optimization library) which are packaged with PAINTOR in order to simplify installation. Please see the [Eigen homepage](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [NLopt homepage](http://ab-initio.mit.edu/wiki/index.php/NLopt) for more information. Note that compiling requires gcc V4.9 (or greater). 
