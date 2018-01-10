@@ -1,8 +1,18 @@
 # PAINTOR
 Probabilistic Annotation INtegraTOR
 
+## UPDATE 01/10/18
+Announcing PAINTOR v3.1!
+1. The new version updates the "fastPAINTOR" inference scheme to use an efficient Gibbs sampling algorithm to sample directly from the posterior. Specify with the `-mcmc` flag. 
+2. The prior effect size variance is estimated directly from the data rather than being fixed apriori
+* 		a. Accomodates variability in effect sizes across fine-mapping regions. 
+*       b. We use truncated SVD to estimate N*h2g for each locus. Use `-prop_ld` flag to modify the proportion of the LD spectrum to keep (default = 0.95).
+*       b. 
+3. Fixes bug in NLopt package that would result in "Optimization Errors" being thrown
+4. More logging of relevant output. 
+
 ## UPDATE 01/07/17
-Announcing PAINTOR v3.0! The new version has enhancements that improve computational effiency, statistical robustness, as well as having expanded functionality to leverage multiple traits. In adddition, we have developed a visualiziation tool, [PAINTOR-CANVIS](https://github.com/gkichaev/PAINTOR_V3.0/tree/master/CANVIS), to produce publication-ready plots for the output of PAINTOR as seen below.  
+Announcing PAINTOR v3.0! The new version has enhancements that improve computational effiency, statistical robustness, as well as having expanded functionality to leverage multiple traits. In adddition, we have developed a visualiziation tool, [PAINTOR-CANVIS](https://github.com/gkichaev/PAINTOR_V3.0/tree/master/CANVIS), to produce publication-ready plots for the output of PAINTOR as seen below.
 
 For legacy purposes, we leave available [PAINTOR 2.1](https://github.com/gkichaev/PAINTOR_V2.1), though we recommend using this latest version for most accurate results.
 
@@ -15,7 +25,7 @@ We provide a command line implementation of the PAINTOR frameworks described in 
 
 1. Summary Association Statistics (Z-scores)
 2. Linkage Disequilibrium Matrix/Matrices (Pairwise Pearson correlations coefficients between each SNP)
-3. Functional Annotation Matrix (Binary indicator of annotation membership (i.e. if entry {i,k} = 1, then SNP i is a member of annotation K). 
+3. Functional Annotation Matrix (Binary indicator of annotation membership (i.e. if entry {i,k} = 1, then SNP i is a member of annotation K).
 
 #### Key Features
 
@@ -28,12 +38,12 @@ We provide a command line implementation of the PAINTOR frameworks described in 
 5. Fully Bayesian treatment of causal effect sizes
 6. (optional) Model population-specific LD patterns when doing multi-ethnic fine-mapping.
 7. (optional) Joint inference across traits when doing multi-trait fine-mapping.
-8. (optional) Approximate inference via Importance Sampling. 
+8. (optional) Approximate inference via Importance Sampling.
 
 #### For detailed information about input file formats, command line flags, and recommended analysis pipelines please see the [wiki](https://github.com/gkichaev/PAINTOR_V3.0/wiki)
 
 ## Installation
-The software has two dependencies: [1] Eigen v3.2 (matrix library) [2] NLopt v2.4.2 (optimization library) which are packaged with PAINTOR in order to simplify installation. Please see the [Eigen homepage](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [NLopt homepage](http://ab-initio.mit.edu/wiki/index.php/NLopt) for more information. Note that compiling requires gcc V4.9 (or greater). 
+The software has two dependencies: [1] Eigen v3.2 (matrix library) [2] NLopt v2.4.2 (optimization library) which are packaged with PAINTOR in order to simplify installation. Please see the [Eigen homepage](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [NLopt homepage](http://ab-initio.mit.edu/wiki/index.php/NLopt) for more information. Note that compiling requires gcc V4.9 (or greater).
 
 For quick installation:
 
