@@ -508,6 +508,7 @@ nlopt_result luksan_plis(int n, nlopt_func f, void *f_data,
 	 case 12: case 13: return NLOPT_MAXEVAL_REACHED;
 	 case 100: return NLOPT_MAXTIME_REACHED;
 	 case -999: return NLOPT_FORCED_STOP;
+	case -6: return NLOPT_SUCCESS;
 	 default: return NLOPT_FAILURE;
      }
 }
