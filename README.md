@@ -4,11 +4,7 @@ Probabilistic Annotation INtegraTOR
 ## UPDATE 01/10/18
 Announcing PAINTOR v3.1!
 1. The new version updates the "fastPAINTOR" inference scheme to use an efficient Gibbs sampling algorithm to sample directly from the posterior. Specify with the `-mcmc` flag. 
-2. The prior effect size variance is estimated directly from the data rather than being fixed apriori
-    
-    a. Accomodates variability in effect sizes across fine-mapping regions. 
-
-    b. We use truncated SVD to estimate N*h2g for each locus. Use `-prop_ld` flag to modify the proportion of the LD spectrum to keep (default = 0.95).
+2. The prior effect size variance is estimated directly from the data rather than being fixed apriori. This allows us accomodate variability in effect sizes across fine-mapping regions. We use truncated SVD to estimate N*h2g for each locus. Use `-prop_ld` flag to modify the proportion of the LD spectrum to keep (default = 0.95).
 3. Fixes bug in NLopt package that would result in "Optimization Errors" being thrown
 4. More logging of relevant output. 
 
@@ -39,7 +35,7 @@ We provide a command line implementation of the PAINTOR frameworks described in 
 5. Fully Bayesian treatment of causal effect sizes
 6. (optional) Model population-specific LD patterns when doing multi-ethnic fine-mapping.
 7. (optional) Joint inference across traits when doing multi-trait fine-mapping.
-8. (optional) Approximate inference via Importance Sampling.
+8. (optional) Approximate inference via Gibbs Sampling.
 
 #### For detailed information about input file formats, command line flags, and recommended analysis pipelines please see the [wiki](https://github.com/gkichaev/PAINTOR_V3.0/wiki)
 
@@ -58,7 +54,7 @@ This will create an executable "PAINTOR". Sample data is provided with the packa
 
 `./PAINTOR -input SampleData/input.files -in SampleData/ -out SampleData/ -Zhead Zscore -LDname ld -enumerate 2 -annotations DHS`
 
-If everything worked correctly the final sum of log Bayes Factors should be: `654.233501`
+If everything worked correctly the final sum of log Bayes Factors should be: `658.648`
 
 For quick start simply type:
 
