@@ -5,9 +5,8 @@ Probabilistic Annotation INtegraTOR
 Announcing PAINTOR v3.1!
 1. The new version updates the "fastPAINTOR" inference scheme to use an efficient Gibbs sampling algorithm to sample directly from the posterior. Specify with the `-mcmc` flag. 
 2. The prior effect size variance is estimated directly from the data rather than being fixed apriori
-	a. Accomodates variability in effect sizes across fine-mapping regions. 
-	
-	b. We use truncated SVD to estimate N*h2g for each locus. Use `-prop_ld` flag to modify the proportion of the LD spectrum to keep (default = 0.95).
+    a. Accomodates variability in effect sizes across fine-mapping regions. 
+    b. We use truncated SVD to estimate N*h2g for each locus. Use `-prop_ld` flag to modify the proportion of the LD spectrum to keep (default = 0.95).
 3. Fixes bug in NLopt package that would result in "Optimization Errors" being thrown
 4. More logging of relevant output. 
 
