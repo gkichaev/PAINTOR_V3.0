@@ -3,10 +3,10 @@ Probabilistic Annotation INtegraTOR
 
 ## UPDATE 01/10/18
 Announcing PAINTOR v3.1!
-1. The new version updates the "fastPAINTOR" inference scheme to use an efficient Gibbs sampling algorithm to sample directly from the posterior. Specify with the `-mcmc` flag. 
+1. The new version updates the PAINTOR approximate inference scheme to use an efficient Gibbs sampling algorithm to sample directly from the posterior. Specify with the `-mcmc` flag. Note that exact inference (limited to k causals) can still be done with the `-enumerate [k]` flag.  
 2. The prior effect size variance is estimated directly from the data rather than being fixed apriori. This allows us accomodate variability in effect sizes across fine-mapping regions. We use truncated SVD to estimate N*h2g for each locus. Use `-prop_ld` flag to modify the proportion of the LD spectrum to keep (default = 0.95).
-3. Fixes bug in NLopt package that would result in "Optimization Errors" being thrown
-4. More logging of relevant output. 
+3. Fixes bug in NLopt package that would result in "Optimization Errors" being thrown.
+4. More logging of relevant output to aid debugging. 
 
 ## UPDATE 01/07/17
 Announcing PAINTOR v3.0! The new version has enhancements that improve computational effiency, statistical robustness, as well as having expanded functionality to leverage multiple traits. In adddition, we have developed a visualiziation tool, [PAINTOR-CANVIS](https://github.com/gkichaev/PAINTOR_V3.0/tree/master/CANVIS), to produce publication-ready plots for the output of PAINTOR as seen below.
