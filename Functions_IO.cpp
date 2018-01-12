@@ -417,6 +417,10 @@ void Parse_command_line(int argc, const char * argv[], execution_parameters& par
 }
 
 void display_execution_message(execution_parameters & parameters){
+    if(parameters.mcmc_flag == 0 && parameters.mcmc_flag == 0){
+        cout << "Error! Please specify either the -mcmc or -enumerate flags" << endl;
+        exit(0);
+    }
     if(parameters.mcmc_flag == 1){
         cout << "Running PAINTOR in MCMC mode" << endl;
         cout << "Number of chains: " << parameters.num_chains << endl;
@@ -471,17 +475,16 @@ void Welcome_Message(){
     cout << "-RESname \t Suffix for ouput files of results [Default: results] " << endl;
     cout << "-ANname \t Suffix for annotation files [Default: annotations]" << endl;
     cout << "-MI \t Maximum iterations for algorithm to run [Default: 10]" << endl;
-    cout << "-post1CV \t fast conversion of Z-scores to posterior probabilites assuming a single casual variant and no annotations [Default: False]" << endl;
     cout << "-gamma_initial \t inititalize the enrichment parameters to a pre-specified value (comma separated) [Default: 0,...,0]" << endl;
     cout << "-variance \t specify prior variance on the causal effect sizes scaled by sample size [Default: 30]" << endl ;
     cout << "-num_samples  \t specify number of samples to draw for each locus [Default: 50000]" << endl ;
     cout << "-enumerate\t specify this flag if you want to enumerate all possible configurations followed by the max number of causal SNPs (eg. -enumerate 3 considers up to 3 causals at each locus) [Default: not specified]" << endl;
     cout << "-set_seed\t specify an integer as a seed for random number generator [default: clock time at execution]" << endl;
-    cout << "-max_causal\t specify the number of causals to pre-compute enrichments with [default: 2]" << endl;
     cout << "-prop_ld_eigenvalues\t specify the proprotion of eigenvalues of LD matrix to keep when estimating the prior variance for each locus [default: 0.95]" << endl;
-    cout << "-mcmc-flag\t should the algorithm be run with MCMC?" << endl;
-    cout << "-burn_in\t specify how many samples to discard during burn-in period [default: 5000]" << endl;
-    cout << "-max_samples\t specify the number of samples to keep [default: 40000]" << endl;
+    cout << "-mcmc\t should the algorithm be run with MCMC? [Default: not specified]" << endl;
+    cout << "-burn_in\t specify how many samples to discard during burn-in period [default: 50000]" << endl;
+    cout << "-max_samples\t specify the number of samples to keep [default: 10000]" << endl;
+    cout << "-num_chains\t specify the number of chains to run [default: 5]" << endl;
     cout << endl << endl ;
 }
 
