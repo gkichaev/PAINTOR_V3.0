@@ -476,7 +476,6 @@ void Welcome_Message(){
     cout << "-ANname \t Suffix for annotation files [Default: annotations]" << endl;
     cout << "-MI \t Maximum iterations for algorithm to run [Default: 10]" << endl;
     cout << "-gamma_initial \t inititalize the enrichment parameters to a pre-specified value (comma separated) [Default: 0,...,0]" << endl;
-    cout << "-variance \t specify prior variance on the causal effect sizes scaled by sample size [Default: 30]" << endl ;
     cout << "-num_samples  \t specify number of samples to draw for each locus [Default: 50000]" << endl ;
     cout << "-enumerate\t specify this flag if you want to enumerate all possible configurations followed by the max number of causal SNPs (eg. -enumerate 3 considers up to 3 causals at each locus) [Default: not specified]" << endl;
     cout << "-set_seed\t specify an integer as a seed for random number generator [default: clock time at execution]" << endl;
