@@ -417,7 +417,7 @@ void Parse_command_line(int argc, const char * argv[], execution_parameters& par
 }
 
 void display_execution_message(execution_parameters & parameters){
-    if(parameters.mcmc_flag == 0 && parameters.mcmc_flag == 0){
+    if(parameters.mcmc_flag == 0 && parameters.enumerate_flag == 0){
         cout << "Error! Please specify either the -mcmc or -enumerate flags" << endl;
         exit(0);
     }
@@ -476,6 +476,7 @@ void Welcome_Message(){
     cout << "-ANname \t Suffix for annotation files [Default: annotations]" << endl;
     cout << "-MI \t Maximum iterations for algorithm to run [Default: 10]" << endl;
     cout << "-gamma_initial \t inititalize the enrichment parameters to a pre-specified value (comma separated) [Default: 0,...,0]" << endl;
+
     cout << "-num_samples  \t specify number of samples to draw for each locus [Default: 50000]" << endl ;
     cout << "-enumerate\t specify this flag if you want to enumerate all possible configurations followed by the max number of causal SNPs (eg. -enumerate 3 considers up to 3 causals at each locus) [Default: not specified]" << endl;
     cout << "-set_seed\t specify an integer as a seed for random number generator [default: clock time at execution]" << endl;
