@@ -497,7 +497,10 @@ void Locus::write_results(string& fname){
     for(int i = 0; i < num_snps ; i++){
         out_line = snp_info[i+1];
         out_line.erase(remove(out_line.begin(),out_line.end(), '\r'), out_line.end());
-        file << out_line + " " + to_string(posterior_probability(i)) + "\n";
+        stringstream stream;
+        stream << scientific << setprecision(5) << posterior_probability(i);
+        string s = stream.str();
+        file << out_line + " " + s + "\n";
     }
     file.close();
 }
