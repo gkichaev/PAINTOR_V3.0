@@ -40,7 +40,7 @@ We provide a command line implementation of the PAINTOR frameworks described in 
 #### For detailed information about input file formats, command line flags, and recommended analysis pipelines please see the [wiki](https://github.com/gkichaev/PAINTOR_V3.0/wiki)
 
 ## Installation
-The software has two dependencies: [1] Eigen v3.2 (matrix library) [2] NLopt v2.4.2 (optimization library) which are packaged with PAINTOR in order to simplify installation. Please see the [Eigen homepage](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [NLopt homepage](http://ab-initio.mit.edu/wiki/index.php/NLopt) for more information. Note that compiling requires gcc V4.9 (or greater).
+The software has two dependencies: [1] Eigen v3.2 (matrix library) [2] NLopt v2.4.2 (optimization library) which are packaged with PAINTOR in order to simplify installation. Please see the [Eigen homepage](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [NLopt homepage](http://ab-initio.mit.edu/wiki/index.php/NLopt) for more information. Note that compiling requires gcc V7.2 (or greater).
 
 For quick installation:
 
