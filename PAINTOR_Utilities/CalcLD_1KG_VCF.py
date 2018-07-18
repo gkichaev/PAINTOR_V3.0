@@ -79,7 +79,8 @@ def Extract_Pop_Haps(vcf_rows, pop_ids):
     """Extract (continental) population haplotypes and return a numpy matrix with haplotypes"""
     header = vcf_rows[0]
     header_str = [item.decode("utf-8") for item in header]
-    extract_index = [header_str.index(ids) for ids in pop_ids]
+    pop_ids_set = set(pop_ids)
+    extract_index = [index for (index, ids) in enumerate(header_str) if ids in pop_ids_set]
     pop_haps =[]
     for rows in vcf_rows[1::]:
         hap_list = [rows[i].decode("utf-8").split("|") for i in extract_index]
