@@ -295,6 +295,10 @@ void Get_all_input(string& file_list_name, vector<Locus>& all_loci,  execution_p
         current_locus.set_annotations(locus_annotations);
         all_loci.push_back(current_locus);
     }
+    if (!all_loci.size()) {
+        cout << "No locus was loaded. Please check the inputs" << endl;
+        exit(1);
+    }
     cout << "**********" <<  endl;
 }
 
