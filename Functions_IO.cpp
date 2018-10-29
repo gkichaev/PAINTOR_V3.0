@@ -286,6 +286,11 @@ void Get_all_input(string& file_list_name, vector<Locus>& all_loci,  execution_p
             Read_LD(directory, ld_name, ld_matrix);
             current_locus.set_LD(ld_matrix);
         }
+
+        if(params.zscore_header.size() != LD_suffix.size()) {
+            cout << "Error. There must be one LD matrix per population or trait" << endl;
+            exit(1);
+        }
         
         //Read in annotations for the locus
         string annot_name_filename = locus_name+ "." + params.annotation_suffix;
