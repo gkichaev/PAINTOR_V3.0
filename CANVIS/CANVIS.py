@@ -37,11 +37,11 @@ def vararg_callback(option, opt_str, value, parser):
     del parser.rargs[:len(value)]
     setattr(parser.values, option.dest, value)
 
-def Read_Input(locus_fname, zscore_names, ld_fnames, annotation_fname, specific_annotations, interval):
+def Read_Input(locus_fname, zscore_names, ld_fnames, annotation_fname, specific_annotations, interval, bp_head):
     """Function that reads in all your data files"""
     zscore_data = pd.read_csv(locus_fname, delim_whitespace=True)
     zscores = zscore_data[zscore_names]
-    location = zscore_data['pos']
+    location = zscore_data[bp_head]
     pos_prob = zscore_data['Posterior_Prob']
 
     if interval is not None: # user input an interval
@@ -133,7 +133,7 @@ def Plot_Statistic_Value(position, zscore, zscore_names, greyscale, lds):
                 [top_vect, top_SNP] = Find_Top_SNP(z, correlation_matrix)
 
             else: # no corresponding LD, so use previously calculated one
-                # warnings.warn("Warning: no corresponding LD matrix for zscore. Plot is made using previous LD matrix.")
+                warnings.warn("Warning: no corresponding LD matrix for zscore. Plot is made using previous LD matrix.")
                 n = len(lds) - 1
                 correlation_matrix = lds[n]
                 [top_vect, top_SNP] = Find_Top_SNP(z, correlation_matrix)
@@ -411,7 +411,8 @@ def Assemble_Figure(zscore_plots, value_plots, heatmaps, annotation_plot, output
     fig.append(colorbar)
 
     #export final figure as a svg and pdf
-    svgfile = "canvis.svg"
+    #svgfile = "canvis.svg"
+    svgfile = output + '.svg'
     fig.save(svgfile)
 
 
@@ -446,6 +447,7 @@ def main():
     parser.add_option("-i", "--interval", dest="interval", nargs=2)
     parser.add_option("-L", "--large_ld", dest="large_ld", default='n')
     parser.add_option("-H", "--horizontal", dest="horizontal", default='n')
+    parser.add_option("-b", "--bp_head", default="BP", dest="bp_head")
 
     # extract options
     (options, args) = parser.parse_args()
@@ -466,6 +468,7 @@ def main():
     interval = options.interval
     large_ld = options.large_ld
     horizontal = options.horizontal
+    bp_head = options.bp_head
 
     usage = \
     """ Need the following flags specified (*)
@@ -487,7 +490,7 @@ def main():
         sys.exit(usage)
 
     [zscores, pos_prob, location, ld, annotations, annotation_names] = Read_Input(locus_name, zscore_names,
-                                                                                  ld_name, annotations, annotation_names, interval)
+                                                                                  ld_name, annotations, annotation_names, interval, bp_head)
     zscore_plots = Plot_Statistic_Value(location, zscores, zscore_names, greyscale, ld)
     value_plots = Plot_Position_Value(location, pos_prob, threshold, greyscale)
 
