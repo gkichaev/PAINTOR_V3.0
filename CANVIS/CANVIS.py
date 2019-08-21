@@ -120,7 +120,7 @@ def Plot_Statistic_Value(position, zscore, zscore_names, greyscale, lds):
     zscore_tuple = []
     for i in range(0, len(zscore_names)):
         fig = plt.figure(figsize=(6, 3.25))
-        sub = fig.add_subplot(1,1,1, axisbg='white')
+        sub = fig.add_subplot(1,1,1, facecolor='white')
         plt.xlim(np.amin(position), np.amax(position) + 1)
         plt.tick_params(axis='both', which='major', labelsize=10)
         plt.ylabel('-log10(pvalue)', fontsize=10)
@@ -192,7 +192,7 @@ def Plot_Position_Value(position, pos_prob, threshold, greyscale):
         set_color = '#D91E18'
     [credible_loc, credible_prob] = Credible_Set(position, pos_prob, threshold)
     fig = plt.figure(figsize=(6, 3.25))
-    sub1 = fig.add_subplot(1,1,1, axisbg='white')
+    sub1 = fig.add_subplot(1,1,1, facecolor='white')
     plt.xlim(np.amin(position), np.amax(position)+1)
     plt.ylabel('Posterior probabilities', fontsize=10)
     plt.tick_params(axis='both', which='major', labelsize=10)
@@ -341,22 +341,25 @@ def Assemble_Figure(zscore_plots, value_plots, heatmaps, annotation_plot, output
     fig.append(plot1)
     # plot heatmap(s)
     len_annotation_plot = size_annotation_plot * (len_ann_plot + 1)
-
     if heatmaps is not None:
         heatmap_count = 0
         for heatmap in heatmaps:
             plot4 = heatmap[0]
-            plot4.savefig('heatmap.svg', format='svg', dpi=DPI, transparent=True)
-            plot4 = sg.fromfile('heatmap.svg')
-            plot4 = plot4.getroot()
+            try:
+                plot4.savefig('heatmap.svg', format='svg', dpi=DPI, transparent=True)
+                plot4 = sg.fromfile('heatmap.svg')
+                plot4 = plot4.getroot()
 
-            #transform and add heatmap figure; must be added first for correct layering
-            if horizontal=='y':
-                y_scale = len_annotation_plot + size_prob_plot +size_heatmap*heatmap_count+ 75
-                plot4.moveto(375,y_scale, scale=1.40)
-                plot4.rotate(-45, 0, 0)
-                fig.append(plot4)
-                x_move = 510
+                #transform and add heatmap figure; must be added first for correct layering
+                if horizontal=='y':
+                    y_scale = len_annotation_plot + size_prob_plot +size_heatmap*heatmap_count+ 75
+                    plot4.moveto(375,y_scale, scale=1.40)
+                    plot4.rotate(-45, 0, 0)
+                    fig.append(plot4)
+                    x_move = 510
+            except Exception as e:
+                print('generate heatmap error')
+                print(e)
 
             else:
                 y_scale = size_stat_plot*len(zscore_plots) + (size_heatmap+1) * heatmap_count + len_annotation_plot + size_prob_plot + 110
@@ -367,11 +370,15 @@ def Assemble_Figure(zscore_plots, value_plots, heatmaps, annotation_plot, output
 
             heatmap_count = heatmap_count + 1
         colorbar_h = heatmap[1]
-        colorbar_h.savefig('colorbar_h.svg', format='svg', dpi=DPI, transparent=True)
-        colorbar_h = sg.fromfile('colorbar_h.svg')
-        colorbar_h = colorbar_h.getroot()
-        colorbar_h.moveto(x_move, y_scale + size_heatmap)
-        fig.append(colorbar_h)
+        try:
+            colorbar_h.savefig('colorbar_h.svg', format='svg', dpi=DPI, transparent=True)
+            colorbar_h = sg.fromfile('colorbar_h.svg')
+            colorbar_h = colorbar_h.getroot()
+            colorbar_h.moveto(x_move, y_scale + size_heatmap)
+            fig.append(colorbar_h)
+        except Exception as e:
+            print('generate colorbar_h error')
+            print(e)
 
 
     if annotation_plot is not None:
@@ -447,7 +454,7 @@ def main():
     parser.add_option("-i", "--interval", dest="interval", nargs=2)
     parser.add_option("-L", "--large_ld", dest="large_ld", default='n')
     parser.add_option("-H", "--horizontal", dest="horizontal", default='n')
-    parser.add_option("-b", "--bp_head", default="BP", dest="bp_head")
+    parser.add_option("-b", "--bp_head", default="pos", dest="bp_head")
 
     # extract options
     (options, args) = parser.parse_args()
@@ -496,6 +503,7 @@ def main():
 
     if ld is not None:
         heatmap = Plot_Heatmap(ld, greyscale, large_ld)
+        
     else:
         heatmap = None
 
@@ -508,8 +516,11 @@ def main():
 
     #remove extraneous files
     if heatmap is not None:
-        os.remove('heatmap.svg')
-        os.remove('colorbar_h.svg')
+        try:
+            os.remove('heatmap.svg')
+            os.remove('colorbar_h.svg')
+        except:
+            pass
     os.remove('stats_plot.svg')
     if annotation_plot is not None:
         os.remove('annotation_plot.svg')
